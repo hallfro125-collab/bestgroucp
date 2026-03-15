@@ -1,0 +1,873 @@
+/* Estilos gerais do site */
+body {
+    background-color: #ffffff;  /* fundo branco */
+    color: #000000;             /* texto preto */
+    font-family: 'Arial', sans-serif;
+    overflow-x: hidden;
+    padding-top: 60px;
+}
+
+/* Estilos gerais para impedir zoom */
+html, body {
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+}
+
+/* Banner superior com contagem regressiva */
+.deadline-banner {
+    background: linear-gradient(90deg, #ffffff, #ffffff);
+    color: rgb(8, 8, 8);
+    padding: 10px 0;
+    text-align: center;
+    font-weight: 600;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1040;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.9rem;
+    border-bottom: 2px solid #f7f1f1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Estilo do ícone do relógio no banner */
+.deadline-banner i {
+    color: #ff0000;
+    font-size: 1.1rem;
+}
+
+/* Estilo do contador regressivo */
+#countdown {
+    display: inline-flex;
+    align-items: center;
+    background: #ff0000;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-left: 8px;
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    letter-spacing: 2px;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
+}
+
+/* Estilo dos números do contador */
+#minutes, #seconds {
+    min-width: 1.5em;
+    display: inline-block;
+    text-align: center;
+}
+
+/* Estilo da barra de navegação */
+.navbar {
+    margin-top: 35px;
+    background: rgba(251, 250, 250, 0.98) !important;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    padding: 0;
+    border-bottom: 1px solid #f8f7f7;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 1030;
+    min-height: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 130px;
+    overflow: visible;
+}
+
+/* Estilo da marca/logo */
+.navbar-brand {
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    line-height: 1;
+    height: 100%;
+    width: 100%;
+    position: relative;
+}
+
+.navbar .container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: auto;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.navbar-logo {
+    height: 250px !important;
+    width: auto;
+    object-fit: contain;
+    display: block;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0;
+}
+
+.navbar-brand:hover {
+    color: #ffffff;
+    transform: scale(1.05);
+}
+
+/* Estilo do ícone da coroa */
+.navbar-brand i {
+    color: #ff0000;
+    margin-right: 10px;
+    font-size: 1.5rem;
+    text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* Container principal do vídeo */
+.vsl-container {
+    max-width: 700px;
+    margin: 2rem auto;
+    padding: 20px;
+    margin-top: 10px;
+}
+
+/* Estilos do wrapper do vídeo */
+.video-wrapper {
+    position: relative;
+    width: 100%;
+    height: 10;
+    padding-bottom: 50%;
+    margin: 0px 0;
+    background: #000;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Estilos do vídeo */
+.video-wrapper video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    opacity: 1;
+    transition: opacity 0.5s ease;
+    background: #000;
+    object-fit: cover;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* Seção de chamada para ação */
+.cta-section {
+    background: rgba(26, 26, 26, 0.95);
+    padding: 2rem;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.15);
+    border: 1px solid rgba(255, 0, 0, 0.1);
+}
+
+/* Estilo do título da seção CTA */
+.cta-section h2 {
+    color: #ffffff;
+    font-size: 2.2rem;
+    text-transform: uppercase;
+    margin-bottom: 1.8rem;
+    font-weight: 800;
+    line-height: 1.2;
+    animation: textGlow 2s infinite;
+}
+
+/* Estilo do texto da oferta */
+.offer-text {
+    color: #ffffff;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+/* Estilo do texto do bônus */
+.bonus-text {
+    color: #ff0000;
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+}
+
+/* Estilo do destaque no texto */
+.highlight {
+    color: #ff0000;
+    font-weight: 700;
+    animation: textGlow 2s infinite;
+}
+
+@keyframes textGlow {
+    0% { text-shadow: 0 0 10px rgba(255, 0, 0, 0.5); }
+    50% { text-shadow: 0 0 20px rgba(255, 0, 0, 0.8); }
+    100% { text-shadow: 0 0 10px rgba(255, 0, 0, 0.5); }
+}
+
+/* Estilo do ícone do título */
+.cta-section h2 i {
+    color: #ff0000;
+    margin-right: 10px;
+}
+
+/* Container dos métodos de pagamento */
+.payment-container {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* Estilo do botão do Stripe */
+stripe-buy-button {
+    --button-height: 50px !important;
+    --button-width: 100% !important;
+    --button-border-radius: 12px !important;
+    --button-font-weight: 600 !important;
+    --button-font-size: 1.1rem !important;
+}
+
+/* Container dos ícones de pagamento */
+.payment-methods {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    padding: 15px;
+    background: #f2f2f2; /* fundo cinza claro - contraste com ícones escuros */
+    border-radius: 12px;
+}
+
+/* Estilo de cada método de pagamento */
+.payment-method {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #222; /* texto escuro */
+}
+
+.payment-method i {
+    font-size: 32px;
+    margin-bottom: 8px;
+    color: #222; /* ícones escuros */
+}
+
+/* Estilo de cada método de pagamento */
+.payment-method {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    color: #4d4d4d;
+    flex: 1;
+    min-width: 0;
+}
+
+/* Estilo dos ícones de pagamento */
+.payment-method i {
+    font-size: .8rem;
+    margin-bottom: 0px;
+    color: #4d4d4d;
+}
+
+/* Estilo do texto dos métodos de pagamento */
+.payment-method span {
+    font-size: 0.7rem;
+    opacity: 0.8;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+}
+
+/* Estilo do contador de visualizações ao vivo */
+.live-viewers {
+    position: absolute;
+    top: 60px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 15px;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    z-index: 10;
+    font-weight: 600;
+}
+
+.live-viewers i {
+    color: #ff0000;
+    font-size: 0.9rem;
+}
+
+/* Container do botão do Telegram */
+.telegram-container {
+    margin-top: 20px;
+    text-align: center;
+}
+
+/* Estilo do botão do Telegram */
+.telegram-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 15px 30px;
+    background: linear-gradient(45deg, #0088cc, #00a2ff);
+    color: white;
+    text-decoration: none;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 20px;
+    box-shadow: 0 4px 15px rgba(0, 136, 204, 0.3);
+}
+
+.telegram-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 136, 204, 0.4);
+    background: linear-gradient(45deg, #00a2ff, #0088cc);
+}
+
+/* Estilo do ícone do Telegram */
+.telegram-button i {
+    font-size: 1.2rem;
+}
+
+/* Estilo do botão de pagamento principal */
+.payment-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: linear-gradient(45deg, #ff0000, #ff3333);
+    color: white;
+    padding: 15px 30px;
+    border-radius: 30px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1.2rem;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(255, 0, 0, 0.3);
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+/* Estilo do ícone do botão de pagamento */
+.payment-button i {
+    font-size: 1.2rem;
+}
+
+/* Ajustes responsivos */
+@media (max-width: 768px) {
+    .navbar {
+        height: 120px;
+    }
+    
+    .navbar-logo {
+        height: 220px !important;
+    }
+    
+    .navbar-brand {
+        font-size: 1.5rem;
+        padding: 6px 15px;
+        max-width: 90%;
+    }
+    
+    .navbar-brand i {
+        font-size: 1.3rem;
+    }
+    
+    .vsl-container {
+        margin-top: 0px;
+        padding: 15px;
+    }
+    
+    .payment-button, .telegram-button {
+        padding: 12px 25px;
+        font-size: 1.1rem;
+    }
+    
+    .live-viewers {
+        top: 50px;
+        right: 15px;
+        padding: 6px 10px;
+        font-size: 0.8rem;
+    }
+
+    .cta-section h2 {
+        font-size: 1.5rem;
+        line-height: 1.4;
+    }
+}
+
+@media (max-width: 480px) {
+    .navbar {
+        height: 110px;
+    }
+    
+    .navbar-logo {
+        height: 200px !important;
+    }
+    
+    .navbar-brand {
+        font-size: 1.3rem;
+        padding: 0;
+        max-width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 100%;
+    }
+    
+    .navbar .container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+    }
+    
+    .vsl-container {
+        margin-top: 90px;
+        padding: 10px;
+    }
+    
+    .payment-button, .telegram-button {
+        padding: 12px 25px;
+        font-size: 1.1rem;
+    }
+
+    .live-viewers {
+        top: 50px;
+        right: 15px;
+        padding: 6px 10px;
+        font-size: 0.8rem;
+    }
+
+    .cta-section h2 {
+        font-size: 1.5rem;
+        line-height: 1.4;
+    }
+}
+
+/* Estilo do popup de saída */
+.exit-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    animation: fadeIn 0.3s ease;
+}
+
+.popup-content {
+    background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.3);
+    border: 2px solid #ff0000;
+    animation: popIn 0.5s ease;
+}
+
+.popup-content h3 {
+    color: #ffffff;
+    font-size: 2rem;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+}
+
+.popup-content p {
+    color: #ffffff;
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+}
+
+.popup-content .highlight {
+    color: #ff0000;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.popup-content .timer {
+    font-size: 1.2rem;
+    margin: 15px 0;
+    color: #ff0000;
+    font-weight: bold;
+}
+
+.popup-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.return-button {
+    background: linear-gradient(45deg, #ff0000, #ff3333);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.return-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 0, 0, 0.4);
+    background: linear-gradient(45deg, #ff3333, #ff0000);
+}
+
+.return-button i {
+    font-size: 1.2rem;
+}
+
+/* Animações */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes popIn {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Melhorias na acessibilidade */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Melhorias no vídeo */
+.video-wrapper {
+    position: relative;
+}
+
+.video-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, rgba(255,0,0,0.1), rgba(0,0,0,0.3));
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Melhorias nos botões */
+.payment-button, .telegram-button {
+    position: relative;
+    overflow: hidden;
+}
+
+.payment-button::after, .telegram-button::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent,
+        rgba(255, 255, 255, 0.1),
+        transparent
+    );
+    transform: rotate(45deg);
+    transition: all 0.3s ease;
+}
+
+.payment-button:hover::after, .telegram-button:hover::after {
+    left: 100%;
+}
+
+/* Remoção de estilos dos selos de confiança */
+.trust-badges,
+.badge,
+.badge i,
+.badge span,
+.badge small {
+    display: none;
+}
+
+/* Ajustes para orientação paisagem */
+@media (max-height: 500px) and (orientation: landscape) {
+    .vsl-container {
+        margin-top: 35px;
+        max-width: 400px;
+    }
+
+    .video-wrapper {
+        max-height: 50vh;
+        padding-bottom: 40%;
+    }
+
+    .cta-section {
+        padding: 0.8rem;
+    }
+}
+
+/* Ajustes específicos para iPhone */
+@supports (-webkit-touch-callout: none) {
+    body {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    video {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+    }
+}
+
+/* Ajustes específicos para Android */
+@supports not (-webkit-touch-callout: none) {
+    body {
+        touch-action: manipulation;
+    }
+    
+    video {
+        touch-action: manipulation;
+    }
+}
+
+/* Configuração da rolagem suave */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Animação de rolagem */
+@keyframes scrollAnimation {
+    0% {
+        transform: translateY(0);
+        opacity: 0;
+    }
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Classe para elementos que devem aparecer durante a rolagem */
+.scroll-reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.scroll-reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Estilo do popup de fim de vídeo */
+.end-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    animation: fadeIn 0.3s ease;
+}
+
+.end-popup .popup-content {
+    background: linear-gradient(135deg, #ffffff, #ffffff);
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 0 30px rgba(253, 252, 252, 0.3);
+    border: 2px solid #fbfbfb;
+    animation: popIn 0.5s ease;
+}
+
+.end-popup h3 {
+    color: #000000;
+    font-size: 2rem;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+}
+.highlight-price {
+  color: blue;
+}
+
+.end-popup p {
+    color: #000000;
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+}
+
+.end-popup .highlight {
+    color: #ff0000;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.end-popup .timer {
+    font-size: 1.2rem;
+    margin: 15px 0;
+    color: #ff0000;
+    font-weight: bold;
+}
+
+.end-popup .popup-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.end-popup .popup-button {
+    background: linear-gradient(45deg, #ff0000, #ff3333);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-decoration: none;
+}
+
+.end-popup .popup-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 0, 0, 0.4);
+    background: linear-gradient(45deg, #ff3333, #ff0000);
+}
+
+.end-popup .popup-button i {
+    font-size: 1.2rem;
+}
+
+/* Animações do popup */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes popIn {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.exclusive-content-section {
+  padding: 40px 20px;
+  background-color: #f9f9f9;
+  text-align: center;
+}
+
+.exclusive-title {
+  font-size: 28px;
+  font-weight: bold;
+  color: #222;
+  margin-bottom: 20px;
+}
+
+.carousel-container {
+  overflow: hidden;
+  width: 100%;
+}
+
+.carousel-track {
+  display: flex;
+  gap: 12px;
+  animation: scroll-left 40s linear infinite;
+  width: max-content;
+}
+
+.carousel-track img {
+  height: auto;
+  width: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+/* Ajuste responsivo para telas maiores */
+@media (min-width: 768px) {
+  .carousel-track img {
+    width: 160px;
+  }
+}
+
+/* Animação contínua */
+@keyframes scroll-left {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
