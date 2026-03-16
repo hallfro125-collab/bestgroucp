@@ -707,7 +707,14 @@ export default function Landing() {
 
   const isDataVideo = !localVideo && settings.videoUrl.startsWith("data:");
   const embedUrl = (!localVideo && !isDataVideo) ? getVideoEmbed(settings.videoUrl) : null;
-  const activeVideoSrc = localVideo || (isDataVideo ? settings.videoUrl : null);
+  // Direct video URL: Catbox, any .mp4/.webm/.mov/.ogg link, or non-embed external URL
+  const isDirectVideo =
+    !localVideo &&
+    !isDataVideo &&
+    !embedUrl &&
+    !!settings.videoUrl &&
+    !settings.videoUrl.startsWith("data:");
+  const activeVideoSrc = localVideo || (isDataVideo ? settings.videoUrl : null) || (isDirectVideo ? settings.videoUrl : null);
   const primaryColor = settings.primaryColor || "#dc2626";
   const accentColor = settings.accentColor || "#9333ea";
 
