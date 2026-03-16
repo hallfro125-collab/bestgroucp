@@ -1,6 +1,19 @@
 {
-  "framework": null,
   "buildCommand": "cd artifacts/vip-landing && npm install && npm run build",
   "outputDirectory": "artifacts/vip-landing/dist/public",
-  "installCommand": "echo skip"
+  "installCommand": "echo skip",
+  "framework": null,
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET,POST,OPTIONS" }
+      ]
+    }
+  ],
+  "env": {
+    "VITE_API_URL": "https://e6651bee-47d4-47f2-b154-0682122dae11-00-2wdy8w90axqbo.kirk.replit.dev/api"
+  }
 }
