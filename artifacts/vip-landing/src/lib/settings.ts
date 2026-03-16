@@ -18,12 +18,18 @@ export type AppSettings = {
   videoUrl: string;
   paymentUrl: string;
   paymentButtonText: string;
+  modalTitle: string;
+  modalBody: string;
+  modalStep1: string;
+  modalStep2: string;
+  modalStep3: string;
   telegramLink: string;
   telegramButtonText: string;
   telegramAutoMessage: string;
   proofs: Proof[];
   primaryColor: string;
   accentColor: string;
+  bgColor: string;
 };
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -40,12 +46,18 @@ export const DEFAULT_SETTINGS: AppSettings = {
   videoUrl: "",
   paymentUrl: "",
   paymentButtonText: "Realizar Pagamento Agora",
+  modalTitle: "",
+  modalBody: "",
+  modalStep1: "",
+  modalStep2: "",
+  modalStep3: "",
   telegramLink: "https://t.me/seugrupo",
   telegramButtonText: "Entrar no Grupo VIP (Telegram)",
   telegramAutoMessage: "Olá! Acabei de comprar o acesso VIP e quero entrar no grupo.",
   proofs: [],
   primaryColor: "#dc2626",
   accentColor: "#9333ea",
+  bgColor: "#ffffff",
 };
 
 export let sessionVideoObjectUrl: string | null = null;
