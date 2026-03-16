@@ -27,6 +27,7 @@ import {
   Trash,
 } from "lucide-react";
 import { loadSettings, saveSettings, setSessionVideoObjectUrl, type AppSettings, type Proof } from "@/lib/settings";
+import { saveRemoteSettings, fetchRemoteSettings } from "@/lib/settingsApi";
 import { loadVisitors, timeAgo, formatTime, formatDate, type Visitor } from "@/lib/analytics";
 
 type Tab = "dashboard" | "product" | "proofs" | "appearance" | "reports";
@@ -97,22 +98,27 @@ function Toggle({
   );
 }
 
-function SaveBar({ onSave }: { onSave: () => void }) {
-  const [saved, setSaved] = useState(false);
-  const handle = () => {
-    onSave();
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
+type SyncStatus = "idle" | "syncing" | "synced" | "error";
+
+function SaveBar({ onSave, syncStatus }: { onSave: () => void; syncStatus: SyncStatus }) {
+  const label =
+    syncStatus === "syncing" ? "Salvando..." :
+    syncStatus === "synced"  ? "✓ Salvo e publicado!" :
+    syncStatus === "error"   ? "⚠ Erro ao publicar — verifique conexão" :
+    "Salvar e publicar alterações";
+  const color =
+    syncStatus === "synced"  ? "bg-green-600 text-white" :
+    syncStatus === "error"   ? "bg-red-500 text-white" :
+    syncStatus === "syncing" ? "bg-purple-400 text-white cursor-wait" :
+    "bg-purple-600 hover:bg-purple-700 text-white";
   return (
     <button
-      onClick={handle}
-      className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold text-sm transition-all ${
-        saved ? "bg-green-500 text-white" : "bg-purple-600 hover:bg-purple-700 text-white"
-      }`}
+      onClick={onSave}
+      disabled={syncStatus === "syncing"}
+      className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold text-sm transition-all ${color}`}
     >
       <Save className="w-4 h-4" />
-      {saved ? "Salvo com sucesso!" : "Salvar alterações"}
+      {label}
     </button>
   );
 }
@@ -195,7 +201,7 @@ function Dashboard({ settings }: { settings: AppSettings }) {
 }
 
 /* ─── Product ─── */
-function ProductTab({ settings, onChange }: { settings: AppSettings; onChange: (s: AppSettings) => void }) {
+function ProductTab({ settings, onChange, onSave, syncStatus }: { settings: AppSettings; onChange: (s: AppSettings) => void; onSave: () => void; syncStatus: SyncStatus }) {
   const set = (key: keyof AppSettings, value: string) => onChange({ ...settings, [key]: value });
   const videoFileRef = useRef<HTMLInputElement>(null);
   const [videoMode, setVideoMode] = useState<"url" | "gallery">("url");
@@ -451,7 +457,7 @@ function ProductTab({ settings, onChange }: { settings: AppSettings; onChange: (
         </div>
       </div>
 
-      <SaveBar onSave={() => saveSettings(settings)} />
+      <SaveBar onSave={onSave} syncStatus={syncStatus} />
     </div>
   );
 }
@@ -566,7 +572,7 @@ function ProofsTab({ settings, onChange }: { settings: AppSettings; onChange: (s
 }
 
 /* ─── Appearance ─── */
-function AppearanceTab({ settings, onChange }: { settings: AppSettings; onChange: (s: AppSettings) => void }) {
+function AppearanceTab({ settings, onChange, onSave, syncStatus }: { settings: AppSettings; onChange: (s: AppSettings) => void; onSave: () => void; syncStatus: SyncStatus }) {
   const PRESETS = [
     { label: "Vermelho", primary: "#dc2626", accent: "#9333ea" },
     { label: "Azul", primary: "#2563eb", accent: "#7c3aed" },
@@ -685,7 +691,7 @@ function AppearanceTab({ settings, onChange }: { settings: AppSettings; onChange
         </div>
       </div>
 
-      <SaveBar onSave={() => saveSettings(settings)} />
+      <SaveBar onSave={onSave} syncStatus={syncStatus} />
     </div>
   );
 }
@@ -935,6 +941,24 @@ export default function Admin() {
   const [tab, setTab] = useState<Tab>("dashboard");
   const [settings, setSettings] = useState<AppSettings>(loadSettings());
   const [authed, setAuthed] = useState(() => sessionStorage.getItem(ADMIN_KEY) === "1");
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
+
+  useEffect(() => {
+    fetchRemoteSettings().then((remote) => {
+      if (remote) {
+        saveSettings(remote);
+        setSettings(remote);
+      }
+    });
+  }, []);
+
+  const handleSave = async () => {
+    setSyncStatus("syncing");
+    saveSettings(settings);
+    const ok = await saveRemoteSettings(settings);
+    setSyncStatus(ok ? "synced" : "error");
+    setTimeout(() => setSyncStatus("idle"), 3000);
+  };
 
   if (!authed) {
     return <AdminLogin onAuth={() => setAuthed(true)} />;
@@ -963,20 +987,24 @@ export default function Admin() {
             <h1 className="text-sm font-bold text-gray-900">VIP Group</h1>
           </div>
         </div>
-        <button
-          onClick={() => setLocation("/")}
-          className="flex items-center gap-1.5 text-gray-400 hover:text-gray-600 text-xs font-medium transition-colors"
-        >
-          <LogOut className="w-4 h-4" />
-          Sair
-        </button>
+        <div className="flex items-center gap-2">
+          {syncStatus === "synced" && <span className="text-[10px] text-green-600 font-semibold">● Publicado</span>}
+          {syncStatus === "error"  && <span className="text-[10px] text-red-500 font-semibold">● Erro ao publicar</span>}
+          <button
+            onClick={() => setLocation("/")}
+            className="flex items-center gap-1.5 text-gray-400 hover:text-gray-600 text-xs font-medium transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            Sair
+          </button>
+        </div>
       </header>
 
       <main className="flex-1 px-4 py-6 max-w-2xl mx-auto w-full pb-24">
         {tab === "dashboard" && <Dashboard settings={settings} />}
-        {tab === "product" && <ProductTab settings={settings} onChange={setSettings} />}
+        {tab === "product" && <ProductTab settings={settings} onChange={setSettings} onSave={handleSave} syncStatus={syncStatus} />}
         {tab === "proofs" && <ProofsTab settings={settings} onChange={setSettings} />}
-        {tab === "appearance" && <AppearanceTab settings={settings} onChange={setSettings} />}
+        {tab === "appearance" && <AppearanceTab settings={settings} onChange={setSettings} onSave={handleSave} syncStatus={syncStatus} />}
         {tab === "reports" && <Reports />}
       </main>
 
