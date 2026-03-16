@@ -1,7 +1,18 @@
 import { AppSettings, DEFAULT_SETTINGS, SETTINGS_KEY } from "./settings";
 
-const API_BASE = (import.meta as { env?: Record<string, string> }).env?.VITE_API_URL ?? "/api";
 const ADMIN_TOKEN = "Almanegra";
+const REPLIT_API = "https://e6651bee-47d4-47f2-b154-0682122dae11-00-2wdy8w90axqbo.kirk.replit.dev/api";
+
+function resolveApiBase(): string {
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL as string;
+  const host = typeof window !== "undefined" ? window.location.hostname : "";
+  if (host === "localhost" || host.includes("replit.dev") || host.includes("replit.app")) {
+    return "/api";
+  }
+  return REPLIT_API;
+}
+
+const API_BASE = resolveApiBase();
 
 export async function fetchRemoteSettings(): Promise<AppSettings | null> {
   try {
@@ -17,7 +28,8 @@ export async function fetchRemoteSettings(): Promise<AppSettings | null> {
 
 export async function saveRemoteSettings(settings: AppSettings): Promise<boolean> {
   try {
-    const res = await fetch(`${API_BASE}/settings`, {
+    const url = `${API_BASE}/settings`;
+    const res = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -25,8 +37,12 @@ export async function saveRemoteSettings(settings: AppSettings): Promise<boolean
       },
       body: JSON.stringify(settings),
     });
+    if (!res.ok) {
+      console.error(`[settingsApi] POST ${url} → ${res.status} ${res.statusText}`);
+    }
     return res.ok;
-  } catch {
+  } catch (err) {
+    console.error("[settingsApi] saveRemoteSettings network error:", err);
     return false;
   }
 }
