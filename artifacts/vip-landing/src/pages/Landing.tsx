@@ -705,7 +705,9 @@ export default function Landing() {
     window.open(`${link}?start=${msg}`, "_blank");
   };
 
-  const embedUrl = localVideo ? null : getVideoEmbed(settings.videoUrl);
+  const isDataVideo = !localVideo && settings.videoUrl.startsWith("data:");
+  const embedUrl = (!localVideo && !isDataVideo) ? getVideoEmbed(settings.videoUrl) : null;
+  const activeVideoSrc = localVideo || (isDataVideo ? settings.videoUrl : null);
   const primaryColor = settings.primaryColor || "#dc2626";
   const accentColor = settings.accentColor || "#9333ea";
 
@@ -773,8 +775,8 @@ export default function Landing() {
         {/* Video */}
         <div className="w-full rounded-xl overflow-hidden bg-gray-900 relative mb-6 shadow-lg">
           <div className="aspect-video relative">
-            {localVideo && isPlaying ? (
-              <video src={localVideo} className="absolute inset-0 w-full h-full object-cover" controls autoPlay muted loop />
+            {activeVideoSrc && isPlaying ? (
+              <video src={activeVideoSrc} className="absolute inset-0 w-full h-full object-cover" controls autoPlay muted loop />
             ) : embedUrl && isPlaying ? (
               <iframe src={embedUrl} className="absolute inset-0 w-full h-full" allow="autoplay; fullscreen" allowFullScreen />
             ) : !isPlaying ? (
