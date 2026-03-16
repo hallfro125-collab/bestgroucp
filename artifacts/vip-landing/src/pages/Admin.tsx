@@ -347,18 +347,24 @@ function ProductTab({ settings, onChange, onSave, syncStatus }: { settings: AppS
           hint="YouTube, Vimeo, Streamable, ou link direto de MP4 público."
         />
         {settings.videoUrl && !settings.videoUrl.startsWith("data:") && (
-          <div className="rounded-lg overflow-hidden border border-gray-100 aspect-video">
-            <iframe
-              src={
-                settings.videoUrl.includes("youtu")
-                  ? `https://www.youtube.com/embed/${settings.videoUrl.match(/(?:v=|youtu\.be\/)([^&?/]+)/)?.[1]}`
-                  : settings.videoUrl.includes("vimeo")
-                  ? `https://player.vimeo.com/video/${settings.videoUrl.match(/vimeo\.com\/(\d+)/)?.[1]}`
-                  : settings.videoUrl
-              }
-              className="w-full h-full"
-              allowFullScreen
-            />
+          <div className="rounded-lg overflow-hidden border border-gray-100 aspect-video bg-black">
+            {settings.videoUrl.includes("youtu") || settings.videoUrl.includes("vimeo") ? (
+              <iframe
+                src={
+                  settings.videoUrl.includes("youtu")
+                    ? `https://www.youtube.com/embed/${settings.videoUrl.match(/(?:v=|youtu\.be\/)([^&?/]+)/)?.[1]}`
+                    : `https://player.vimeo.com/video/${settings.videoUrl.match(/vimeo\.com\/(\d+)/)?.[1]}`
+                }
+                className="w-full h-full"
+                allowFullScreen
+              />
+            ) : (
+              <video
+                src={settings.videoUrl}
+                controls
+                className="w-full h-full object-contain"
+              />
+            )}
           </div>
         )}
 
