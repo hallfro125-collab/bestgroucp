@@ -1,0 +1,6 @@
+{
+  "framework": null,
+  "buildCommand": "cd artifacts/vip-landing && npm install && npm run build",
+  "outputDirectory": "artifacts/vip-landing/dist/public",
+  "installCommand": "echo skip"
+}
