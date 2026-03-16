@@ -204,7 +204,6 @@ function Dashboard({ settings }: { settings: AppSettings }) {
 function ProductTab({ settings, onChange, onSave, syncStatus }: { settings: AppSettings; onChange: (s: AppSettings) => void; onSave: () => void; syncStatus: SyncStatus }) {
   const set = (key: keyof AppSettings, value: string) => onChange({ ...settings, [key]: value });
   const videoFileRef = useRef<HTMLInputElement>(null);
-  const [videoMode, setVideoMode] = useState<"url" | "gallery">("url");
   const [localVideoPreview, setLocalVideoPreview] = useState<string | null>(null);
 
   const CURRENCIES = ["R$", "$", "€", "£", "USDT", "¥", "CHF", "AUD"];
@@ -334,49 +333,46 @@ function ProductTab({ settings, onChange, onSave, syncStatus }: { settings: AppS
           <Video className="w-4 h-4" /> Vídeo
         </h3>
 
-        {/* Mode toggle */}
-        <div className="flex rounded-lg border border-gray-200 overflow-hidden">
-          <button
-            onClick={() => setVideoMode("url")}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold transition-colors ${videoMode === "url" ? "bg-purple-600 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}
-          >
-            <Link className="w-3.5 h-3.5" /> Link (YouTube/Vimeo)
-          </button>
-          <button
-            onClick={() => setVideoMode("gallery")}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold transition-colors ${videoMode === "gallery" ? "bg-purple-600 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}
-          >
-            <Upload className="w-3.5 h-3.5" /> Da galeria
-          </button>
+        {/* Recommended: URL */}
+        <div className="rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-xs text-green-800 flex gap-2">
+          <span className="text-base leading-none">✅</span>
+          <span><strong>Recomendado para todos os visitantes:</strong> Cole um link do YouTube, Vimeo ou Streamable. Funciona em qualquer lugar, sem limitações de tamanho.</span>
         </div>
 
-        {videoMode === "url" ? (
-          <>
-            <Field
-              label="Link do vídeo"
-              value={settings.videoUrl.startsWith("data:") ? "" : settings.videoUrl}
-              onChange={(v) => set("videoUrl", v)}
-              placeholder="https://youtube.com/watch?v=..."
-              hint="Cole o link do YouTube ou Vimeo."
+        <Field
+          label="Link do vídeo"
+          value={settings.videoUrl.startsWith("data:") ? "" : settings.videoUrl}
+          onChange={(v) => set("videoUrl", v)}
+          placeholder="https://youtube.com/watch?v=..."
+          hint="YouTube, Vimeo, Streamable, ou link direto de MP4 público."
+        />
+        {settings.videoUrl && !settings.videoUrl.startsWith("data:") && (
+          <div className="rounded-lg overflow-hidden border border-gray-100 aspect-video">
+            <iframe
+              src={
+                settings.videoUrl.includes("youtu")
+                  ? `https://www.youtube.com/embed/${settings.videoUrl.match(/(?:v=|youtu\.be\/)([^&?/]+)/)?.[1]}`
+                  : settings.videoUrl.includes("vimeo")
+                  ? `https://player.vimeo.com/video/${settings.videoUrl.match(/vimeo\.com\/(\d+)/)?.[1]}`
+                  : settings.videoUrl
+              }
+              className="w-full h-full"
+              allowFullScreen
             />
-            {settings.videoUrl && !settings.videoUrl.startsWith("data:") && (
-              <div className="rounded-lg overflow-hidden border border-gray-100 aspect-video">
-                <iframe
-                  src={
-                    settings.videoUrl.includes("youtu")
-                      ? `https://www.youtube.com/embed/${settings.videoUrl.match(/(?:v=|youtu\.be\/)([^&?/]+)/)?.[1]}`
-                      : settings.videoUrl.includes("vimeo")
-                      ? `https://player.vimeo.com/video/${settings.videoUrl.match(/vimeo\.com\/(\d+)/)?.[1]}`
-                      : settings.videoUrl
-                  }
-                  className="w-full h-full"
-                  allowFullScreen
-                />
-              </div>
-            )}
-          </>
-        ) : (
-          <>
+          </div>
+        )}
+
+        {/* Optional: local file (admin preview only) */}
+        <details className="group">
+          <summary className="cursor-pointer text-xs text-gray-400 hover:text-gray-600 select-none list-none flex items-center gap-1">
+            <span className="group-open:rotate-90 transition-transform inline-block">▶</span>
+            Ou enviar arquivo local (apenas pré-visualização)
+          </summary>
+          <div className="mt-3 space-y-3">
+            <div className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-xs text-amber-800 flex gap-2">
+              <span className="text-base leading-none">⚠️</span>
+              <span><strong>Atenção:</strong> Vídeos enviados como arquivo ficam visíveis apenas enquanto o Replit estiver aberto. Para que <em>todos</em> os visitantes vejam, use o link acima.</span>
+            </div>
             <input
               ref={videoFileRef}
               type="file"
@@ -387,7 +383,7 @@ function ProductTab({ settings, onChange, onSave, syncStatus }: { settings: AppS
                 if (!file) return;
                 const MAX_MB = 15;
                 if (file.size > MAX_MB * 1024 * 1024) {
-                  alert(`Vídeo muito grande. Limite: ${MAX_MB}MB. O seu arquivo tem ${(file.size / 1024 / 1024).toFixed(1)}MB.\n\nDica: use um link do YouTube ou Vimeo para vídeos maiores.`);
+                  alert(`Vídeo muito grande. Limite: ${MAX_MB}MB.\n\nDica: use um link do YouTube ou Vimeo.`);
                   if (videoFileRef.current) videoFileRef.current.value = "";
                   return;
                 }
@@ -404,12 +400,11 @@ function ProductTab({ settings, onChange, onSave, syncStatus }: { settings: AppS
             />
             <button
               onClick={() => videoFileRef.current?.click()}
-              className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-purple-200 hover:border-purple-400 text-purple-600 font-semibold py-5 rounded-xl transition-colors"
+              className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 hover:border-purple-400 text-gray-500 hover:text-purple-600 font-semibold py-4 rounded-xl transition-colors text-sm"
             >
-              <Upload className="w-5 h-5" />
-              Escolher vídeo da galeria
+              <Upload className="w-4 h-4" />
+              Escolher vídeo (pré-visualização)
             </button>
-            <p className="text-xs text-gray-400 text-center">MP4, MOV, WebM · Máximo 15MB · Publicado para todos os visitantes</p>
 
             {(localVideoPreview && localVideoPreview !== "loading") || settings.videoUrl.startsWith("data:") ? (
               <div className="space-y-2">
@@ -433,8 +428,8 @@ function ProductTab({ settings, onChange, onSave, syncStatus }: { settings: AppS
                 <span className="animate-spin">⏳</span> Carregando vídeo...
               </div>
             ) : null}
-          </>
-        )}
+          </div>
+        </details>
       </div>
 
       {/* Telegram */}
