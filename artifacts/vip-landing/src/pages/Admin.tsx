@@ -354,12 +354,12 @@ function ProductTab({ settings, onChange, onSave, syncStatus }: { settings: AppS
           <>
             <Field
               label="Link do vídeo"
-              value={settings.videoUrl}
+              value={settings.videoUrl.startsWith("data:") ? "" : settings.videoUrl}
               onChange={(v) => set("videoUrl", v)}
               placeholder="https://youtube.com/watch?v=..."
               hint="Cole o link do YouTube ou Vimeo."
             />
-            {settings.videoUrl && (
+            {settings.videoUrl && !settings.videoUrl.startsWith("data:") && (
               <div className="rounded-lg overflow-hidden border border-gray-100 aspect-video">
                 <iframe
                   src={
@@ -385,11 +385,21 @@ function ProductTab({ settings, onChange, onSave, syncStatus }: { settings: AppS
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
-                const url = URL.createObjectURL(file);
-                setLocalVideoPreview(url);
-                setSessionVideoObjectUrl(url);
-                // Clear the URL-based video
-                set("videoUrl", "");
+                const MAX_MB = 15;
+                if (file.size > MAX_MB * 1024 * 1024) {
+                  alert(`Vídeo muito grande. Limite: ${MAX_MB}MB. O seu arquivo tem ${(file.size / 1024 / 1024).toFixed(1)}MB.\n\nDica: use um link do YouTube ou Vimeo para vídeos maiores.`);
+                  if (videoFileRef.current) videoFileRef.current.value = "";
+                  return;
+                }
+                setLocalVideoPreview("loading");
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                  const dataUrl = ev.target?.result as string;
+                  setLocalVideoPreview(dataUrl);
+                  setSessionVideoObjectUrl(dataUrl);
+                  onChange({ ...settings, videoUrl: dataUrl });
+                };
+                reader.readAsDataURL(file);
               }}
             />
             <button
@@ -399,25 +409,30 @@ function ProductTab({ settings, onChange, onSave, syncStatus }: { settings: AppS
               <Upload className="w-5 h-5" />
               Escolher vídeo da galeria
             </button>
-            <p className="text-xs text-gray-400 text-center">MP4, MOV, WebM · O vídeo fica ativo durante a sessão</p>
+            <p className="text-xs text-gray-400 text-center">MP4, MOV, WebM · Máximo 15MB · Publicado para todos os visitantes</p>
 
-            {localVideoPreview && (
+            {(localVideoPreview && localVideoPreview !== "loading") || settings.videoUrl.startsWith("data:") ? (
               <div className="space-y-2">
                 <div className="rounded-lg overflow-hidden border border-gray-100 aspect-video bg-black">
-                  <video src={localVideoPreview} controls className="w-full h-full object-contain" />
+                  <video src={localVideoPreview && localVideoPreview !== "loading" ? localVideoPreview : settings.videoUrl} controls className="w-full h-full object-contain" />
                 </div>
                 <button
                   onClick={() => {
                     setLocalVideoPreview(null);
                     setSessionVideoObjectUrl(null);
                     if (videoFileRef.current) videoFileRef.current.value = "";
+                    onChange({ ...settings, videoUrl: "" });
                   }}
                   className="w-full text-xs text-red-500 hover:text-red-700 py-1 transition-colors"
                 >
                   Remover vídeo
                 </button>
               </div>
-            )}
+            ) : localVideoPreview === "loading" ? (
+              <div className="flex items-center justify-center gap-2 py-4 text-sm text-purple-500">
+                <span className="animate-spin">⏳</span> Carregando vídeo...
+              </div>
+            ) : null}
           </>
         )}
       </div>
