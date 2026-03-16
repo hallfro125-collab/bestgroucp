@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useLocation } from "wouter";
 import { Lock, PlayCircle, Send, X, ChevronDown, Heart, MessageCircle } from "lucide-react";
 import { loadSettings, sessionVideoObjectUrl, type AppSettings } from "@/lib/settings";
+import { trackVisitor, updateVisitor, getSessionId } from "@/lib/analytics";
 
 /* ─── Translations ─── */
 
@@ -574,10 +575,20 @@ function getVideoEmbed(url: string): string | null {
 
 /* ─── Payment Modal ─── */
 
-function PaymentModal({ onClose, paymentUrl, paymentButtonText, primaryColor, t, lang, onLangChange }: {
+function PaymentModal({ onClose, paymentUrl, paymentButtonText, primaryColor, t, lang, onLangChange,
+  modalTitle, modalBody, modalStep1, modalStep2, modalStep3, onPaymentClick }: {
   onClose: () => void; paymentUrl: string; paymentButtonText: string; primaryColor: string;
   t: LangData; lang: LangKey; onLangChange: (l: LangKey) => void;
+  modalTitle: string; modalBody: string; modalStep1: string; modalStep2: string; modalStep3: string;
+  onPaymentClick?: () => void;
 }) {
+  const title = modalTitle || t.modalTitle;
+  const body = modalBody || t.modalBody;
+  const steps = [
+    modalStep1 || t.step1,
+    modalStep2 || t.step2,
+    modalStep3 || t.step3,
+  ];
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pb-6 sm:pb-0">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
@@ -593,10 +604,10 @@ function PaymentModal({ onClose, paymentUrl, paymentButtonText, primaryColor, t,
           <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${primaryColor}18` }}>
             <span className="text-2xl">💳</span>
           </div>
-          <h2 className="text-xl font-extrabold text-gray-900 text-center mb-2">{t.modalTitle}</h2>
-          <p className="text-gray-500 text-sm text-center leading-relaxed mb-5">{t.modalBody}</p>
+          <h2 className="text-xl font-extrabold text-gray-900 text-center mb-2">{title}</h2>
+          <p className="text-gray-500 text-sm text-center leading-relaxed mb-5">{body}</p>
           <div className="space-y-2.5 mb-5">
-            {([t.step1, t.step2, t.step3] as string[]).map((text, i) => (
+            {steps.map((text, i) => (
               <div key={i} className="flex items-start gap-3">
                 <div className="w-6 h-6 rounded-full text-white flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5" style={{ backgroundColor: primaryColor }}>
                   {i + 1}
@@ -606,7 +617,7 @@ function PaymentModal({ onClose, paymentUrl, paymentButtonText, primaryColor, t,
             ))}
           </div>
           <button
-            onClick={() => { if (paymentUrl) window.open(paymentUrl, "_blank"); }}
+            onClick={() => { if (paymentUrl) { onPaymentClick?.(); window.open(paymentUrl, "_blank"); } }}
             disabled={!paymentUrl}
             className="w-full flex items-center justify-center gap-2 text-white font-bold py-4 rounded-xl transition-all mb-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
             style={{ backgroundColor: primaryColor }}
@@ -642,6 +653,7 @@ export default function Landing() {
     const onStorage = () => setSettings(loadSettings());
     window.addEventListener("storage", onStorage);
     const id = setInterval(() => { setSettings(loadSettings()); setLocalVideo(sessionVideoObjectUrl); }, 1500);
+    trackVisitor();
     return () => { window.removeEventListener("storage", onStorage); clearInterval(id); };
   }, []);
 
@@ -665,6 +677,8 @@ export default function Landing() {
     if (ctaTimerRef.current) clearTimeout(ctaTimerRef.current);
     if (ctaCountRef.current >= 3) { ctaCountRef.current = 0; setLocation("/admin"); return; }
     setShowModal(true);
+    const sid = getSessionId();
+    if (sid) updateVisitor(sid, { ctaClicked: true });
     ctaTimerRef.current = setTimeout(() => { ctaCountRef.current = 0; }, 1500);
   }, [setLocation]);
 
@@ -687,7 +701,7 @@ export default function Landing() {
   ];
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: settings.bgColor || "#ffffff" }}>
       {showModal && (
         <PaymentModal
           onClose={() => setShowModal(false)}
@@ -695,6 +709,15 @@ export default function Landing() {
           paymentButtonText={settings.paymentButtonText}
           primaryColor={primaryColor}
           t={t} lang={lang} onLangChange={changeLang}
+          modalTitle={settings.modalTitle}
+          modalBody={settings.modalBody}
+          modalStep1={settings.modalStep1}
+          modalStep2={settings.modalStep2}
+          modalStep3={settings.modalStep3}
+          onPaymentClick={() => {
+            const sid = getSessionId();
+            if (sid) updateVisitor(sid, { paymentClicked: true });
+          }}
         />
       )}
 
