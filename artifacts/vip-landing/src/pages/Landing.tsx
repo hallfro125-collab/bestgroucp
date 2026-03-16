@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useLocation } from "wouter";
 import { Lock, PlayCircle, Send, X, ChevronDown, Heart, MessageCircle } from "lucide-react";
 import { loadSettings, sessionVideoObjectUrl, type AppSettings } from "@/lib/settings";
+import { fetchRemoteSettings, saveLocalSettings } from "@/lib/settingsApi";
 import { trackVisitor, updateVisitor, getSessionId } from "@/lib/analytics";
 
 /* ─── Translations ─── */
@@ -650,11 +651,27 @@ export default function Landing() {
   };
 
   useEffect(() => {
+    fetchRemoteSettings().then((remote) => {
+      if (remote) {
+        saveLocalSettings(remote);
+        setSettings(remote);
+      }
+    });
+
     const onStorage = () => setSettings(loadSettings());
     window.addEventListener("storage", onStorage);
     const id = setInterval(() => { setSettings(loadSettings()); setLocalVideo(sessionVideoObjectUrl); }, 1500);
+    const remoteId = setInterval(() => {
+      fetchRemoteSettings().then((remote) => {
+        if (remote) { saveLocalSettings(remote); setSettings(remote); }
+      });
+    }, 30000);
     trackVisitor();
-    return () => { window.removeEventListener("storage", onStorage); clearInterval(id); };
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      clearInterval(id);
+      clearInterval(remoteId);
+    };
   }, []);
 
   const t = LANGS[lang];
