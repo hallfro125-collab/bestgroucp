@@ -66,7 +66,8 @@ export function setSessionVideoObjectUrl(url: string | null) {
   sessionVideoObjectUrl = url;
 }
 
-const KEY = "vip_app_settings";
+export const SETTINGS_KEY = "vip_app_settings";
+const KEY = SETTINGS_KEY;
 
 export function loadSettings(): AppSettings {
   try {
