@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import {
   BarChart2,
@@ -7,7 +7,7 @@ import {
   LogOut,
   TrendingUp,
   Users,
-  DollarSign,
+  MousePointerClick,
   ShoppingCart,
   Save,
   ArrowLeft,
@@ -20,8 +20,14 @@ import {
   Link,
   Upload,
   Lock,
+  Monitor,
+  Smartphone,
+  Globe,
+  Clock,
+  Trash,
 } from "lucide-react";
 import { loadSettings, saveSettings, setSessionVideoObjectUrl, type AppSettings, type Proof } from "@/lib/settings";
+import { loadVisitors, timeAgo, formatTime, formatDate, type Visitor } from "@/lib/analytics";
 
 type Tab = "dashboard" | "product" | "proofs" | "appearance" | "reports";
 
@@ -113,21 +119,38 @@ function SaveBar({ onSave }: { onSave: () => void }) {
 
 /* ─── Dashboard ─── */
 function Dashboard({ settings }: { settings: AppSettings }) {
-  const currency = settings.currency || "R$";
+  const [visitors, setVisitors] = useState<Visitor[]>([]);
+
+  useEffect(() => {
+    const load = () => setVisitors(loadVisitors());
+    load();
+    const id = setInterval(load, 3000);
+    return () => clearInterval(id);
+  }, []);
+
+  const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+  const today = visitors.filter(v => v.timestamp >= todayStart.getTime());
+  const ctaCount = visitors.filter(v => v.ctaClicked).length;
+  const payCount = visitors.filter(v => v.paymentClicked).length;
+  const convRate = visitors.length > 0 ? ((payCount / visitors.length) * 100).toFixed(1) : "0";
+  const last5 = [...visitors].sort((a, b) => b.timestamp - a.timestamp).slice(0, 5);
+
+  const stats = [
+    { icon: Users, label: "Visitantes Hoje", value: String(today.length), sub: `${visitors.length} no total`, color: "bg-purple-500" },
+    { icon: MousePointerClick, label: "Clicaram no CTA", value: String(ctaCount), sub: visitors.length > 0 ? `${((ctaCount / visitors.length) * 100).toFixed(0)}% dos visitantes` : "—", color: "bg-blue-500" },
+    { icon: ShoppingCart, label: "Foram ao Pagamento", value: String(payCount), sub: ctaCount > 0 ? `${((payCount / ctaCount) * 100).toFixed(0)}% dos CTAs` : "—", color: "bg-green-500" },
+    { icon: TrendingUp, label: "Taxa de Conversão", value: `${convRate}%`, sub: "visitante → pagamento", color: "bg-orange-500" },
+  ];
+
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-bold text-gray-900 mb-1">Dashboard</h2>
-        <p className="text-gray-500 text-sm">Visão geral do desempenho</p>
+        <p className="text-gray-500 text-sm">Dados reais de visitantes da sua página</p>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        {[
-          { icon: DollarSign, label: "Receita Total", value: `${currency} 48.350`, change: "+12% este mês", color: "bg-green-500" },
-          { icon: Users, label: "Membros VIP", value: "1.247", change: "+87 esta semana", color: "bg-purple-500" },
-          { icon: ShoppingCart, label: "Vendas Hoje", value: "34", change: "+5 nas últimas 2h", color: "bg-blue-500" },
-          { icon: TrendingUp, label: "Conversão", value: "8,4%", change: "+1,2% vs. semana passada", color: "bg-orange-500" },
-        ].map(({ icon: Icon, label, value, change, color }) => (
+        {stats.map(({ icon: Icon, label, value, sub, color }) => (
           <div key={label} className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs text-gray-500 font-medium">{label}</span>
@@ -136,35 +159,36 @@ function Dashboard({ settings }: { settings: AppSettings }) {
               </div>
             </div>
             <p className="text-xl font-bold text-gray-900">{value}</p>
-            <p className="text-xs text-green-600 font-medium mt-0.5">{change}</p>
+            <p className="text-xs text-gray-400 font-medium mt-0.5">{sub}</p>
           </div>
         ))}
       </div>
 
       <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-        <h3 className="font-bold text-gray-900 mb-4">Últimas Transações</h3>
-        <div className="space-y-2">
-          {[
-            { name: "Carlos M.", time: "2 min atrás", status: "success" },
-            { name: "Ana R.", time: "18 min atrás", status: "success" },
-            { name: "Pedro L.", time: "45 min atrás", status: "success" },
-            { name: "Julia S.", time: "1h atrás", status: "success" },
-            { name: "Marco A.", time: "2h atrás", status: "pending" },
-          ].map((tx, i) => (
-            <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-              <div>
-                <p className="text-sm font-semibold text-gray-800">{tx.name}</p>
-                <p className="text-xs text-gray-400">{tx.time}</p>
+        <h3 className="font-bold text-gray-900 mb-4">Últimos Visitantes</h3>
+        {last5.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-4">Nenhum visitante ainda. Abra a página principal para começar a rastrear.</p>
+        ) : (
+          <div className="space-y-2">
+            {last5.map((v) => (
+              <div key={v.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">{v.flag || "🌍"}</span>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800">{v.city !== "—" ? `${v.city}, ` : ""}{v.country}</p>
+                    <p className="text-xs text-gray-400">{formatTime(v.timestamp)} · {v.device} · {v.browser}</p>
+                  </div>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  {v.paymentClicked && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">Pagamento</span>}
+                  {v.ctaClicked && !v.paymentClicked && <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">CTA</span>}
+                  {!v.ctaClicked && <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">Visitou</span>}
+                  <span className="text-xs text-gray-400">{timeAgo(v.timestamp)}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-gray-900">{currency} {settings.price}</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${tx.status === "success" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
-                  {tx.status === "success" ? "Pago" : "Pendente"}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -227,9 +251,10 @@ function ProductTab({ settings, onChange }: { settings: AppSettings; onChange: (
       {/* Payment */}
       <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm space-y-4">
         <h3 className="font-bold text-gray-700 text-xs uppercase tracking-wide flex items-center gap-2">
-          💳 Botão de Pagamento (modal)
+          💳 Modal de Pagamento
         </h3>
-        <p className="text-xs text-gray-400 -mt-1">Quando o visitante clica no CTA, aparece um modal. Configure o botão de pagamento abaixo.</p>
+        <p className="text-xs text-gray-400 -mt-1">Quando o visitante clica no CTA, aparece um modal. Personalize todo o conteúdo abaixo.</p>
+
         <Field
           label="Link de Pagamento"
           value={settings.paymentUrl}
@@ -243,6 +268,48 @@ function ProductTab({ settings, onChange }: { settings: AppSettings; onChange: (
           onChange={(v) => set("paymentButtonText", v)}
           placeholder="Realizar Pagamento Agora"
         />
+
+        <div className="border-t border-gray-100 pt-4 space-y-4">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Textos do Modal</p>
+          <p className="text-xs text-gray-400 -mt-2">Deixe em branco para usar o texto padrão do idioma selecionado.</p>
+          <Field
+            label="Título do Modal"
+            value={settings.modalTitle}
+            onChange={(v) => set("modalTitle", v)}
+            placeholder="Finalize seu pagamento"
+          />
+          <Field
+            label="Descrição / Corpo do Modal"
+            value={settings.modalBody}
+            onChange={(v) => set("modalBody", v)}
+            placeholder="Clique no botão abaixo para pagar. Após o pagamento, envie o comprovante no Telegram..."
+            type="textarea"
+          />
+        </div>
+
+        <div className="border-t border-gray-100 pt-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center text-xs font-bold text-purple-700">3</div>
+            <p className="text-xs font-bold text-gray-700 uppercase tracking-wide">Passo a Passo de Como Pagar</p>
+          </div>
+          <p className="text-xs text-gray-400">Estes 3 passos aparecem no modal quando o visitante clica no botão. Deixe em branco para usar o texto padrão.</p>
+          {[
+            { key: "modalStep1" as const, label: "① Passo 1", placeholder: "Clique no botão de pagamento" },
+            { key: "modalStep2" as const, label: "② Passo 2", placeholder: "Conclua o pagamento normalmente" },
+            { key: "modalStep3" as const, label: "③ Passo 3", placeholder: "Envie o comprovante no Telegram para liberar o acesso" },
+          ].map(({ key, label, placeholder }) => (
+            <div key={key} className="bg-gray-50 rounded-lg p-3 space-y-1.5">
+              <label className="text-xs font-semibold text-gray-600">{label}</label>
+              <input
+                type="text"
+                value={settings[key]}
+                onChange={(e) => set(key, e.target.value)}
+                placeholder={placeholder}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white"
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Timer */}
@@ -568,13 +635,43 @@ function AppearanceTab({ settings, onChange }: { settings: AppSettings; onChange
             </div>
           </div>
         </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-gray-500 mb-1">Cor de Fundo da Página</label>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-2 flex-1">
+              <input
+                type="color"
+                value={settings.bgColor || "#ffffff"}
+                onChange={(e) => onChange({ ...settings, bgColor: e.target.value })}
+                className="w-7 h-7 rounded cursor-pointer border-0 p-0 bg-transparent"
+              />
+              <span className="text-sm text-gray-700 font-mono">{settings.bgColor || "#ffffff"}</span>
+            </div>
+            <div className="flex gap-1.5">
+              {["#ffffff", "#0f172a", "#1e1b4b", "#022c22", "#1c1917"].map((c) => (
+                <button
+                  key={c}
+                  onClick={() => onChange({ ...settings, bgColor: c })}
+                  className="w-7 h-7 rounded-lg border-2 transition-all"
+                  style={{
+                    backgroundColor: c,
+                    borderColor: settings.bgColor === c ? "#7c3aed" : "#e5e7eb",
+                  }}
+                  title={c}
+                />
+              ))}
+            </div>
+          </div>
+          <p className="text-xs text-gray-400 mt-1">Escolha uma cor ou use os atalhos rápidos acima.</p>
+        </div>
       </div>
 
       {/* Preview */}
       <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm space-y-3">
         <h3 className="font-bold text-gray-700 text-xs uppercase tracking-wide">Preview</h3>
-        <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-          <p className="text-center text-gray-800 font-bold text-base">
+        <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: settings.bgColor || "#ffffff" }}>
+          <p className="text-center font-bold text-base" style={{ color: settings.bgColor === "#ffffff" || !settings.bgColor ? "#1f2937" : "#ffffff" }}>
             Access exclusive content in the{" "}
             <span style={{ color: settings.accentColor }}>VIP Group</span>
           </p>
@@ -595,71 +692,174 @@ function AppearanceTab({ settings, onChange }: { settings: AppSettings; onChange
 
 /* ─── Reports ─── */
 function Reports() {
-  const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-  const values = [8200, 11500, 9800, 14200, 12100, 16800, 15400, 19200, 17600, 22100, 20800, 24300];
-  const maxVal = Math.max(...values);
+  const [visitors, setVisitors] = useState<Visitor[]>([]);
+  const [filter, setFilter] = useState<"all" | "cta" | "payment">("all");
+
+  useEffect(() => {
+    const load = () => setVisitors(loadVisitors());
+    load();
+    const id = setInterval(load, 3000);
+    return () => clearInterval(id);
+  }, []);
+
+  const clearAll = () => {
+    if (!confirm("Apagar todos os dados de visitantes?")) return;
+    localStorage.removeItem("vip_visitors");
+    setVisitors([]);
+  };
+
+  const sorted = [...visitors].sort((a, b) => b.timestamp - a.timestamp);
+  const filtered = filter === "cta" ? sorted.filter(v => v.ctaClicked)
+                 : filter === "payment" ? sorted.filter(v => v.paymentClicked)
+                 : sorted;
+
+  // Country breakdown
+  const byCountry: Record<string, { flag: string; count: number }> = {};
+  for (const v of visitors) {
+    const key = v.country || "Desconhecido";
+    if (!byCountry[key]) byCountry[key] = { flag: v.flag || "🌍", count: 0 };
+    byCountry[key].count++;
+  }
+  const countryList = Object.entries(byCountry)
+    .sort((a, b) => b[1].count - a[1].count)
+    .slice(0, 6);
+  const maxCountry = countryList[0]?.[1].count || 1;
+
+  // Device breakdown
+  const devices: Record<string, number> = {};
+  for (const v of visitors) { devices[v.device] = (devices[v.device] || 0) + 1; }
+
+  // Funnel
+  const total = visitors.length;
+  const ctaCount = visitors.filter(v => v.ctaClicked).length;
+  const payCount = visitors.filter(v => v.paymentClicked).length;
+  const pct = (n: number) => total > 0 ? `${((n / total) * 100).toFixed(0)}%` : "—";
 
   return (
     <div className="space-y-5">
-      <div>
-        <h2 className="text-xl font-bold text-gray-900 mb-1">Relatórios</h2>
-        <p className="text-gray-500 text-sm">Análise de desempenho e vendas</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900 mb-1">Relatórios</h2>
+          <p className="text-gray-500 text-sm">Dados reais de visitantes</p>
+        </div>
+        {visitors.length > 0 && (
+          <button onClick={clearAll} className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 transition-colors">
+            <Trash className="w-3.5 h-3.5" /> Limpar
+          </button>
+        )}
       </div>
 
+      {/* Funil */}
       <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-        <h3 className="font-bold text-gray-900 mb-4">Receita Mensal</h3>
-        <div className="flex items-end gap-1.5 h-36">
-          {values.map((v, i) => (
-            <div key={i} className="flex-1 flex flex-col items-center gap-1">
-              <div className="w-full bg-purple-500 rounded-t-sm" style={{ height: `${(v / maxVal) * 100}%` }} />
-              <span className="text-[9px] text-gray-400">{months[i]}</span>
-            </div>
-          ))}
-        </div>
+        <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2"><TrendingUp className="w-4 h-4 text-purple-500" /> Funil de Conversão</h3>
+        {total === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-2">Nenhum visitante ainda.</p>
+        ) : (
+          <div className="space-y-2">
+            {[
+              { stage: "Visitantes totais", count: total, pct: "100%", color: "bg-purple-500" },
+              { stage: "Clicaram no CTA", count: ctaCount, pct: pct(ctaCount), color: "bg-blue-500" },
+              { stage: "Foram ao pagamento", count: payCount, pct: pct(payCount), color: "bg-green-500" },
+            ].map((row) => (
+              <div key={row.stage} className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0">
+                <div className="flex-1">
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-700">{row.stage}</span>
+                    <span className="font-bold text-gray-900">{row.count}</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-1.5">
+                    <div className={`${row.color} h-1.5 rounded-full`} style={{ width: row.pct === "—" ? "0%" : row.pct }} />
+                  </div>
+                </div>
+                <span className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full font-bold w-12 text-center">{row.pct}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-        <h3 className="font-bold text-gray-900 mb-4">Fontes de Tráfego</h3>
-        <div className="space-y-3">
-          {[
-            { source: "Instagram", pct: 45, color: "bg-pink-500" },
-            { source: "WhatsApp", pct: 28, color: "bg-green-500" },
-            { source: "Orgânico", pct: 15, color: "bg-blue-500" },
-            { source: "YouTube", pct: 8, color: "bg-red-500" },
-            { source: "Outros", pct: 4, color: "bg-gray-400" },
-          ].map((row) => (
-            <div key={row.source}>
-              <div className="flex justify-between text-sm mb-1">
-                <span className="font-medium text-gray-700">{row.source}</span>
-                <span className="text-gray-500">{row.pct}%</span>
+      {/* Countries */}
+      {countryList.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+          <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2"><Globe className="w-4 h-4 text-blue-500" /> Países</h3>
+          <div className="space-y-2.5">
+            {countryList.map(([country, { flag, count }]) => (
+              <div key={country}>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="font-medium text-gray-700">{flag} {country}</span>
+                  <span className="text-gray-500">{count} visitante{count !== 1 ? "s" : ""}</span>
+                </div>
+                <div className="w-full bg-gray-100 rounded-full h-2">
+                  <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${(count / maxCountry) * 100}%` }} />
+                </div>
               </div>
-              <div className="w-full bg-gray-100 rounded-full h-2">
-                <div className={`${row.color} h-2 rounded-full`} style={{ width: `${row.pct}%` }} />
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
-      <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-        <h3 className="font-bold text-gray-900 mb-4">Funil de Conversão</h3>
-        <div className="space-y-2">
-          {[
-            { stage: "Visitantes", count: "12.847", pct: "100%" },
-            { stage: "Assistiram o vídeo", count: "8.231", pct: "64%" },
-            { stage: "Clicaram no botão", count: "3.412", pct: "27%" },
-            { stage: "Foram ao checkout", count: "1.891", pct: "15%" },
-            { stage: "Compraram", count: "1.079", pct: "8,4%" },
-          ].map((row, i) => (
-            <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-              <span className="text-sm text-gray-700">{row.stage}</span>
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-bold text-gray-900">{row.count}</span>
-                <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium">{row.pct}</span>
+      {/* Devices */}
+      {Object.keys(devices).length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+          <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2"><Smartphone className="w-4 h-4 text-green-500" /> Dispositivos</h3>
+          <div className="flex gap-3">
+            {Object.entries(devices).map(([device, count]) => (
+              <div key={device} className="flex-1 bg-gray-50 rounded-xl p-3 text-center">
+                <div className="flex justify-center mb-1">
+                  {device === "Mobile" ? <Smartphone className="w-5 h-5 text-purple-500" /> : <Monitor className="w-5 h-5 text-blue-500" />}
+                </div>
+                <p className="text-lg font-bold text-gray-900">{count}</p>
+                <p className="text-xs text-gray-500">{device}</p>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
+      )}
+
+      {/* Visitor list */}
+      <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-bold text-gray-900 flex items-center gap-2"><Clock className="w-4 h-4 text-orange-500" /> Todos os Visitantes</h3>
+          <div className="flex gap-1">
+            {(["all", "cta", "payment"] as const).map((f) => (
+              <button key={f} onClick={() => setFilter(f)}
+                className={`text-xs px-2 py-1 rounded-lg font-medium transition-colors ${filter === f ? "bg-purple-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                {f === "all" ? "Todos" : f === "cta" ? "CTA" : "Pagamento"}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {filtered.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-4">Nenhum visitante encontrado.</p>
+        ) : (
+          <div className="space-y-0">
+            {filtered.map((v) => (
+              <div key={v.id} className="py-3 border-b border-gray-50 last:border-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-xl flex-shrink-0">{v.flag || "🌍"}</span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-800 truncate">
+                        {v.city !== "—" ? `${v.city}, ` : ""}{v.country}
+                      </p>
+                      <p className="text-xs text-gray-400">{formatDate(v.timestamp)} às {formatTime(v.timestamp)}</p>
+                      <p className="text-xs text-gray-400">{v.device} · {v.browser} · {v.os} · {v.language}</p>
+                      {v.referrer && v.referrer !== "Direto" && (
+                        <p className="text-xs text-gray-400 truncate">↗ {v.referrer}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                    {v.paymentClicked && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">💳 Pagamento</span>}
+                    {v.ctaClicked && <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">👆 CTA</span>}
+                    <span className="text-xs text-gray-400">{timeAgo(v.timestamp)}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
