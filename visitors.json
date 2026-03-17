@@ -12,7 +12,7 @@
     "os": "Android",
     "language": "ko-KR",
     "referrer": "https://t.co/",
-    "ctaClicked": false,
+    "ctaClicked": true,
     "paymentClicked": false
   },
   {
