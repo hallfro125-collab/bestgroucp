@@ -2,7 +2,8 @@ import { AppSettings, DEFAULT_SETTINGS, SETTINGS_KEY } from "./settings";
 
 const ADMIN_TOKEN = "Almanegra";
 const REPLIT_API = "https://e6651bee-47d4-47f2-b154-0682122dae11-00-2wdy8w90axqbo.kirk.replit.dev/api";
-const GITHUB_RAW = "https://raw.githubusercontent.com/hallfro125-collab/bestgroucp/main/settings.json";
+// Use GitHub Contents API (no CDN cache) instead of raw.githubusercontent.com (cached for minutes)
+const GITHUB_API_URL = "https://api.github.com/repos/hallfro125-collab/bestgroucp/contents/settings.json";
 
 function isReplitEnv(): boolean {
   if (import.meta.env.VITE_API_URL) return false;
@@ -20,12 +21,19 @@ export async function fetchRemoteSettings(): Promise<AppSettings | null> {
 
   if (!onReplit) {
     try {
-      const url = `${GITHUB_RAW}?t=${Date.now()}`;
-      const res = await fetch(url, { cache: "no-store" });
+      // GitHub Contents API — always returns current content, no CDN cache
+      const res = await fetch(GITHUB_API_URL, {
+        cache: "no-store",
+        headers: { "Accept": "application/vnd.github.v3+json" },
+      });
       if (res.ok) {
-        const data = await res.json();
-        if (data && typeof data === "object" && Object.keys(data).length > 0) {
-          return { ...DEFAULT_SETTINGS, ...data } as AppSettings;
+        const meta = await res.json() as { content?: string };
+        if (meta.content) {
+          const decoded = atob(meta.content.replace(/\n/g, ""));
+          const data = JSON.parse(decoded);
+          if (data && typeof data === "object" && Object.keys(data).length > 0) {
+            return { ...DEFAULT_SETTINGS, ...data } as AppSettings;
+          }
         }
       }
     } catch {
