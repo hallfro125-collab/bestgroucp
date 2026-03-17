@@ -1,5 +1,21 @@
 [
   {
+    "id": "test_err",
+    "timestamp": 1234567890000,
+    "country": "Brasil",
+    "countryCode": "BR",
+    "city": "SP",
+    "flag": "🇧🇷",
+    "ip": "1.1.1.1",
+    "device": "Mobile",
+    "browser": "Safari",
+    "os": "iOS",
+    "language": "pt",
+    "referrer": "test",
+    "ctaClicked": false,
+    "paymentClicked": false
+  },
+  {
     "id": "test_local_1773737672",
     "timestamp": 1773737672000,
     "country": "Portugal",
