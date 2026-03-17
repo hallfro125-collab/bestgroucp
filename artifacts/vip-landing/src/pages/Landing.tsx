@@ -249,8 +249,10 @@ type LangData = typeof LANGS[LangKey];
 const LANG_STORAGE_KEY = "vip_lang";
 
 function getLang(): LangKey {
+  // Use sessionStorage so each new visit always starts in English.
+  // The choice persists within the same tab session but resets on a fresh visit.
   try {
-    const v = localStorage.getItem(LANG_STORAGE_KEY) as LangKey;
+    const v = sessionStorage.getItem(LANG_STORAGE_KEY) as LangKey;
     if (v && v in LANGS) return v;
   } catch { /**/ }
   return "en";
@@ -594,11 +596,11 @@ function getVideoEmbed(url: string): string | null {
 /* ─── Payment Modal ─── */
 
 function PaymentModal({ onClose, paymentUrl, paymentButtonText, primaryColor, t, lang, onLangChange,
-  modalTitle, modalBody, modalStep1, modalStep2, modalStep3, onPaymentClick }: {
+  modalTitle, modalBody, modalStep1, modalStep2, modalStep3, onPaymentClick, telegramLink, onTelegramClick }: {
   onClose: () => void; paymentUrl: string; paymentButtonText: string; primaryColor: string;
   t: LangData; lang: LangKey; onLangChange: (l: LangKey) => void;
   modalTitle: string; modalBody: string; modalStep1: string; modalStep2: string; modalStep3: string;
-  onPaymentClick?: () => void;
+  onPaymentClick?: () => void; telegramLink?: string; onTelegramClick?: () => void;
 }) {
   const title = modalTitle || t.modalTitle;
   const body = modalBody || t.modalBody;
@@ -637,12 +639,23 @@ function PaymentModal({ onClose, paymentUrl, paymentButtonText, primaryColor, t,
           <button
             onClick={() => { if (paymentUrl) { onPaymentClick?.(); window.open(paymentUrl, "_blank"); } }}
             disabled={!paymentUrl}
-            className="w-full flex items-center justify-center gap-2 text-white font-bold py-4 rounded-xl transition-all mb-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+            className="w-full flex items-center justify-center gap-2 text-white font-bold py-4 rounded-xl transition-all mb-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
             style={{ backgroundColor: primaryColor }}
           >
             <Lock className="w-4 h-4" />
             {paymentButtonText || t.payBtn}
           </button>
+
+          {telegramLink && (
+            <button
+              onClick={onTelegramClick}
+              className="w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1dbd57] text-white font-bold py-4 rounded-xl transition-all mb-3 shadow-lg"
+            >
+              <Send className="w-4 h-4" />
+              {t.sendCodeBtn}
+            </button>
+          )}
+
           <button onClick={onClose} className="w-full text-gray-400 text-sm py-2 hover:text-gray-600 transition-colors">
             {t.close}
           </button>
@@ -680,7 +693,7 @@ export default function Landing() {
 
   const changeLang = (l: LangKey) => {
     setLangState(l);
-    try { localStorage.setItem(LANG_STORAGE_KEY, l); } catch { /**/ }
+    try { sessionStorage.setItem(LANG_STORAGE_KEY, l); } catch { /**/ }
   };
 
   useEffect(() => {
@@ -795,6 +808,8 @@ export default function Landing() {
             const sid = getSessionId();
             if (sid) updateVisitor(sid, { paymentClicked: true });
           }}
+          telegramLink={settings.telegramLink}
+          onTelegramClick={handleTelegramClick}
         />
       )}
 
