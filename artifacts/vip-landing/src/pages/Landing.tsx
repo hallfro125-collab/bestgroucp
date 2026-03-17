@@ -784,9 +784,23 @@ export default function Landing() {
         <div className="w-full rounded-xl overflow-hidden bg-gray-900 relative mb-6 shadow-lg">
           <div className="aspect-video relative">
             {activeVideoSrc && isPlaying ? (
-              <video src={activeVideoSrc} className="absolute inset-0 w-full h-full object-cover" controls autoPlay muted loop />
+              <video
+                src={activeVideoSrc}
+                className="absolute inset-0 w-full h-full object-cover"
+                autoPlay
+                muted
+                playsInline
+                loop
+                controls
+              />
             ) : embedUrl && isPlaying ? (
-              <iframe src={embedUrl} className="absolute inset-0 w-full h-full" allow="autoplay; fullscreen" allowFullScreen />
+              <iframe
+                src={embedUrl}
+                className="absolute inset-0 w-full h-full"
+                frameBorder="0"
+                allow="autoplay; encrypted-media; picture-in-picture"
+                allowFullScreen
+              />
             ) : !isPlaying ? (
               <div className="absolute inset-0 flex items-center justify-center cursor-pointer group" onClick={() => setIsPlaying(true)}>
                 <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900" />
