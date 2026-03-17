@@ -1,5 +1,21 @@
 [
   {
+    "id": "z29dai18y1mmus21wg",
+    "timestamp": 1773761931808,
+    "country": "Desconhecido",
+    "countryCode": "",
+    "city": "—",
+    "flag": "🌍",
+    "ip": "—",
+    "device": "Mobile",
+    "browser": "Outro",
+    "os": "iOS",
+    "language": "ko-KR",
+    "referrer": "https://t.co/",
+    "ctaClicked": false,
+    "paymentClicked": false
+  },
+  {
     "id": "ch0mq19rctimmurzwf3",
     "timestamp": 1773761831391,
     "country": "South Korea",
