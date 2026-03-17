@@ -1,5 +1,21 @@
 [
   {
+    "id": "2hfawkh9gjmmuq63gs",
+    "timestamp": 1773758761228,
+    "country": "Desconhecido",
+    "countryCode": "",
+    "city": "—",
+    "flag": "🌍",
+    "ip": "—",
+    "device": "Mobile",
+    "browser": "Firefox",
+    "os": "Android",
+    "language": "en-GB",
+    "referrer": "Direto",
+    "ctaClicked": false,
+    "paymentClicked": false
+  },
+  {
     "id": "hdnldmivpccmmuq4je4",
     "timestamp": 1773758688556,
     "country": "Desconhecido",
