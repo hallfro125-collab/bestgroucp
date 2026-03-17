@@ -28,7 +28,7 @@
     "os": "Android",
     "language": "en-GB",
     "referrer": "https://t.co/",
-    "ctaClicked": false,
+    "ctaClicked": true,
     "paymentClicked": false
   },
   {
