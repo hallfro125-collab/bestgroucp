@@ -645,6 +645,7 @@ export default function Landing() {
   const [showModal, setShowModal] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string>("");
   const [lang, setLangState] = useState<LangKey>(getLang());
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const changeLang = (l: LangKey) => {
     setLangState(l);
@@ -679,6 +680,15 @@ export default function Landing() {
       clearInterval(remoteId);
     };
   }, []);
+
+  // Programmatic play whenever the video source changes (catches cases where
+  // the browser ignores the autoPlay attribute until interacted with).
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    el.muted = true;
+    el.play().catch(() => {/* blocked by browser policy – user must interact */});
+  }, [videoUrl]);
 
   const t = LANGS[lang];
   const isDefault = lang === "en";
@@ -785,6 +795,7 @@ export default function Landing() {
           <div className="aspect-video relative">
             {activeVideoSrc && isPlaying ? (
               <video
+                ref={videoRef}
                 src={activeVideoSrc}
                 className="absolute inset-0 w-full h-full object-cover"
                 autoPlay
@@ -792,6 +803,10 @@ export default function Landing() {
                 playsInline
                 loop
                 controls
+                onCanPlay={() => {
+                  const el = videoRef.current;
+                  if (el) { el.muted = true; el.play().catch(() => {}); }
+                }}
               />
             ) : embedUrl && isPlaying ? (
               <iframe
