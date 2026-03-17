@@ -97,9 +97,9 @@ export function getVideoType(url: string): "youtube" | "vimeo" | "mp4" | "unknow
  */
 export function buildEmbedUrl(url: string): string | null {
   const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/]+)/);
-  if (yt) return `https://www.youtube.com/embed/${yt[1]}?autoplay=1&mute=1&loop=1&playlist=${yt[1]}`;
-  if (url.includes("youtube.com/embed/")) return url + (url.includes("?") ? "&" : "?") + "autoplay=1&mute=1";
+  if (yt) return `https://www.youtube.com/embed/${yt[1]}?autoplay=1&mute=1&playsinline=1&loop=1&playlist=${yt[1]}`;
+  if (url.includes("youtube.com/embed/")) return url + (url.includes("?") ? "&" : "?") + "autoplay=1&mute=1&playsinline=1";
   const vi = url.match(/vimeo\.com\/(\d+)/);
-  if (vi) return `https://player.vimeo.com/video/${vi[1]}?autoplay=1&muted=1&loop=1`;
+  if (vi) return `https://player.vimeo.com/video/${vi[1]}?autoplay=1&muted=1&playsinline=1&loop=1`;
   return null;
 }
