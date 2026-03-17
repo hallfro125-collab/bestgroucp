@@ -1,5 +1,5 @@
 {
-  "installCommand": "corepack enable && pnpm install",
+  "installCommand": "npm install -g pnpm@10 && pnpm install --no-frozen-lockfile",
   "buildCommand": "pnpm --filter @workspace/vip-landing run build",
   "outputDirectory": "artifacts/vip-landing/dist/public",
   "framework": null,
