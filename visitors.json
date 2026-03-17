@@ -1,5 +1,21 @@
 [
   {
+    "id": "p1rhpeuutrmmutmuz3",
+    "timestamp": 1773764582223,
+    "country": "Desconhecido",
+    "countryCode": "",
+    "city": "—",
+    "flag": "🌍",
+    "ip": "—",
+    "device": "Mobile",
+    "browser": "Outro",
+    "os": "iOS",
+    "language": "ko-KR",
+    "referrer": "https://t.co/",
+    "ctaClicked": false,
+    "paymentClicked": false
+  },
+  {
     "id": "ptho13q5r1mmutkor8",
     "timestamp": 1773764480852,
     "country": "Desconhecido",
