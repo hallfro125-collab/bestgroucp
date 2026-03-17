@@ -647,6 +647,15 @@ export default function Landing() {
   const [lang, setLangState] = useState<LangKey>(getLang());
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  // Callback ref: fires the instant the <video> element enters the DOM.
+  // More reliable than useEffect because it doesn't depend on render timing.
+  const videoCallbackRef = useCallback((el: HTMLVideoElement | null) => {
+    videoRef.current = el;
+    if (!el) return;
+    el.muted = true;
+    el.play().catch(() => {});
+  }, []);
+
   const changeLang = (l: LangKey) => {
     setLangState(l);
     try { localStorage.setItem(LANG_STORAGE_KEY, l); } catch { /**/ }
@@ -795,7 +804,7 @@ export default function Landing() {
           <div className="aspect-video relative">
             {activeVideoSrc && isPlaying ? (
               <video
-                ref={videoRef}
+                ref={videoCallbackRef}
                 src={activeVideoSrc}
                 className="absolute inset-0 w-full h-full object-cover"
                 autoPlay
@@ -803,9 +812,12 @@ export default function Landing() {
                 playsInline
                 loop
                 controls
-                onCanPlay={() => {
-                  const el = videoRef.current;
-                  if (el) { el.muted = true; el.play().catch(() => {}); }
+                controlsList="nofullscreen nodownload nopictureinpicture"
+                disablePictureInPicture
+                onCanPlay={(e) => {
+                  const el = e.currentTarget;
+                  el.muted = true;
+                  el.play().catch(() => {});
                 }}
               />
             ) : embedUrl && isPlaying ? (
@@ -813,8 +825,7 @@ export default function Landing() {
                 src={embedUrl}
                 className="absolute inset-0 w-full h-full"
                 frameBorder="0"
-                allow="autoplay; encrypted-media; picture-in-picture"
-                allowFullScreen
+                allow="autoplay; encrypted-media"
               />
             ) : !isPlaying ? (
               <div className="absolute inset-0 flex items-center justify-center cursor-pointer group" onClick={() => setIsPlaying(true)}>
