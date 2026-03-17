@@ -1,7 +1,7 @@
 {
-  "buildCommand": "cd artifacts/vip-landing && npm install && npm run build",
+  "installCommand": "npm install -g pnpm && pnpm install",
+  "buildCommand": "pnpm --filter @workspace/vip-landing run build",
   "outputDirectory": "artifacts/vip-landing/dist/public",
-  "installCommand": "echo skip",
   "framework": null,
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
   "headers": [
