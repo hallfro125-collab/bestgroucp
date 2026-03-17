@@ -5,6 +5,7 @@ import { loadSettings, type AppSettings } from "@/lib/settings";
 import { fetchRemoteSettings, saveLocalSettings } from "@/lib/settingsApi";
 import { fetchLatestVideoUrl, buildEmbedUrl } from "@/lib/videosApi";
 import { trackVisitor, updateVisitor, getSessionId } from "@/lib/analytics";
+import { fetchComments, postComment, type VisitorComment } from "@/lib/commentsApi";
 
 /* ─── Translations ─── */
 
@@ -412,17 +413,41 @@ function LangSelector({ lang, onChange, compact = false }: { lang: LangKey; onCh
 
 /* ─── Comments Section ─── */
 
+function relativeTime(iso: string, justNowLabel: string): string {
+  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (diff < 60) return justNowLabel;
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+}
+
+function apiToComment(vc: VisitorComment, justNowLabel: string): Comment {
+  return {
+    id: vc.id,
+    name: vc.name,
+    text: vc.text,
+    flag: vc.flag,
+    initials: vc.initials,
+    color: vc.color,
+    likes: vc.likes,
+    timeLabel: relativeTime(vc.createdAt, justNowLabel),
+    isUser: true,
+  };
+}
+
 function CommentsSection({ t, lang, primaryColor }: { t: LangData; lang: LangKey; primaryColor: string }) {
   const [userComments, setUserComments] = useState<Comment[]>([]);
   const [liked, setLiked] = useState<Record<string, boolean>>({});
   const [name, setName] = useState("");
   const [text, setText] = useState("");
   const [sent, setSent] = useState(false);
+  const [posting, setPosting] = useState(false);
 
   useEffect(() => {
+    fetchComments().then((list) => {
+      setUserComments(list.map((vc) => apiToComment(vc, t.commentsJustNow)));
+    });
     try {
-      const uc = localStorage.getItem("vip_user_comments");
-      if (uc) setUserComments(JSON.parse(uc));
       const lk = localStorage.getItem("vip_liked");
       if (lk) setLiked(JSON.parse(lk));
     } catch { /**/ }
@@ -438,26 +463,41 @@ function CommentsSection({ t, lang, primaryColor }: { t: LangData; lang: LangKey
     try { localStorage.setItem("vip_liked", JSON.stringify(updated)); } catch { /**/ }
   };
 
-  const handleSubmit = () => {
-    if (!name.trim() || !text.trim()) return;
-    const nc: Comment = {
+  const handleSubmit = async () => {
+    if (!name.trim() || !text.trim() || posting) return;
+    setPosting(true);
+    const initials = name.trim().split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
+    const localComment: Comment = {
       id: `u_${Date.now()}`,
       name: name.trim(),
       flag: "🌍",
-      initials: name.trim().split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase(),
+      initials,
       color: "#6366f1",
       text: text.trim(),
       likes: 0,
       timeLabel: t.commentsJustNow,
       isUser: true,
     };
-    const updated = [nc, ...userComments];
-    setUserComments(updated);
-    try { localStorage.setItem("vip_user_comments", JSON.stringify(updated)); } catch { /**/ }
+    setUserComments((prev) => [localComment, ...prev]);
     setName("");
     setText("");
     setSent(true);
     setTimeout(() => setSent(false), 3000);
+
+    const saved = await postComment({
+      name: localComment.name,
+      text: localComment.text,
+      flag: "🌍",
+      initials,
+      color: "#6366f1",
+      lang,
+    });
+    if (saved) {
+      setUserComments((prev) =>
+        prev.map((c) => (c.id === localComment.id ? apiToComment(saved, t.commentsJustNow) : c))
+      );
+    }
+    setPosting(false);
   };
 
   return (
@@ -533,11 +573,11 @@ function CommentsSection({ t, lang, primaryColor }: { t: LangData; lang: LangKey
         ) : (
           <button
             onClick={handleSubmit}
-            disabled={!name.trim() || !text.trim()}
+            disabled={!name.trim() || !text.trim() || posting}
             className="w-full py-2.5 rounded-lg text-sm font-bold text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ backgroundColor: primaryColor }}
           >
-            {t.commentsBtn}
+            {posting ? "..." : t.commentsBtn}
           </button>
         )}
       </div>
