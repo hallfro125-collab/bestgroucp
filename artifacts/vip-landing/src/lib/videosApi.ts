@@ -1,6 +1,4 @@
 const ADMIN_TOKEN = "Almanegra";
-const REPLIT_API = "https://e6651bee-47d4-47f2-b154-0682122dae11-00-2wdy8w90axqbo.kirk.replit.dev/api";
-const GITHUB_VIDEOS_API = "https://api.github.com/repos/hallfro125-collab/bestgroucp/contents/videos.json";
 
 export type VideoEntry = {
   id: string;
@@ -8,48 +6,26 @@ export type VideoEntry = {
   addedAt: string;
 };
 
-function isReplitEnv(): boolean {
-  if (import.meta.env.VITE_API_URL) return false;
-  const host = typeof window !== "undefined" ? window.location.hostname : "";
-  return host === "localhost" || host.includes("replit.dev") || host.includes("replit.app");
-}
-
+/**
+ * Resolve the API base URL.
+ * - On Vercel:  uses relative "/api" → hits Vercel serverless functions.
+ * - On Replit dev: uses "/api" → proxied to local Express server via vite.
+ * - If VITE_API_URL is set explicitly, use that.
+ */
 function resolveApiBase(): string {
   if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL as string;
-  return isReplitEnv() ? "/api" : REPLIT_API;
+  return "/api";
 }
 
 /**
  * Fetch all videos.
- * On Vercel: reads from GitHub (no CDN cache, always fresh).
- * On Replit: reads from local API server.
- * Falls back to Replit API if GitHub fails.
+ * Always uses the API (Vercel serverless or Replit Express).
  */
 export async function fetchVideos(): Promise<VideoEntry[]> {
-  const onReplit = isReplitEnv();
-
-  if (!onReplit) {
-    try {
-      const res = await fetch(GITHUB_VIDEOS_API, {
-        cache: "no-store",
-        headers: { "Accept": "application/vnd.github.v3+json" },
-      });
-      if (res.ok) {
-        const meta = await res.json() as { content?: string };
-        if (meta.content) {
-          const decoded = atob(meta.content.replace(/\n/g, ""));
-          const db = JSON.parse(decoded) as { videos?: VideoEntry[] };
-          return Array.isArray(db.videos) ? db.videos : [];
-        }
-      }
-    } catch {
-      // fall through to API fallback
-    }
-  }
-
   try {
-    const API_BASE = resolveApiBase();
-    const res = await fetch(`${API_BASE}/videos`, { cache: "no-store" });
+    const res = await fetch(`${resolveApiBase()}/videos`, {
+      cache: "no-store",
+    });
     if (!res.ok) return [];
     const data = await res.json();
     return Array.isArray(data) ? data : [];
@@ -67,12 +43,11 @@ export async function fetchLatestVideoUrl(): Promise<string | null> {
 }
 
 /**
- * Add a new video. Always writes through Replit API (admin action).
+ * Add a new video.
  */
 export async function addVideo(url: string): Promise<{ ok: boolean; error?: string }> {
   try {
-    const API_BASE = resolveApiBase();
-    const res = await fetch(`${API_BASE}/videos`, {
+    const res = await fetch(`${resolveApiBase()}/videos`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -95,8 +70,7 @@ export async function addVideo(url: string): Promise<{ ok: boolean; error?: stri
  */
 export async function deleteVideo(id: string): Promise<boolean> {
   try {
-    const API_BASE = resolveApiBase();
-    const res = await fetch(`${API_BASE}/videos/${id}`, {
+    const res = await fetch(`${resolveApiBase()}/videos/${id}`, {
       method: "DELETE",
       headers: { "x-admin-token": ADMIN_TOKEN },
     });
@@ -119,6 +93,7 @@ export function getVideoType(url: string): "youtube" | "vimeo" | "mp4" | "unknow
 
 /**
  * Build an embed URL for YouTube or Vimeo.
+ * Returns null for direct video files.
  */
 export function buildEmbedUrl(url: string): string | null {
   const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/]+)/);
