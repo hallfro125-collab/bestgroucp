@@ -1,5 +1,21 @@
 [
   {
+    "id": "7flftpblk9cmmuu3mig",
+    "timestamp": 1773765364408,
+    "country": "Desconhecido",
+    "countryCode": "",
+    "city": "—",
+    "flag": "🌍",
+    "ip": "—",
+    "device": "Desktop",
+    "browser": "Safari",
+    "os": "macOS",
+    "language": "en-US",
+    "referrer": "Direto",
+    "ctaClicked": false,
+    "paymentClicked": false
+  },
+  {
     "id": "dcn8gtzbdckmmuu1gvf",
     "timestamp": 1773765263788,
     "country": "Desconhecido",
