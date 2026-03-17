@@ -1,1 +1,18 @@
-[]
+[
+  {
+    "id": "test_local_1773737672",
+    "timestamp": 1773737672000,
+    "country": "Portugal",
+    "countryCode": "PT",
+    "city": "Lisboa",
+    "flag": "🇵🇹",
+    "ip": "127.0.0.1",
+    "device": "Desktop",
+    "browser": "Chrome",
+    "os": "macOS",
+    "language": "pt",
+    "referrer": "test",
+    "ctaClicked": false,
+    "paymentClicked": false
+  }
+]
