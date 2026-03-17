@@ -26,9 +26,10 @@ import {
   Clock,
   Trash,
 } from "lucide-react";
-import { loadSettings, saveSettings, setSessionVideoObjectUrl, type AppSettings, type Proof } from "@/lib/settings";
+import { loadSettings, saveSettings, type AppSettings, type Proof } from "@/lib/settings";
 import { saveRemoteSettings, fetchRemoteSettings } from "@/lib/settingsApi";
 import { loadVisitors, timeAgo, formatTime, formatDate, type Visitor } from "@/lib/analytics";
+import { addVideo, fetchVideos, deleteVideo, buildEmbedUrl, type VideoEntry } from "@/lib/videosApi";
 
 type Tab = "dashboard" | "product" | "proofs" | "appearance" | "reports";
 
@@ -200,11 +201,128 @@ function Dashboard({ settings }: { settings: AppSettings }) {
   );
 }
 
+/* ─── Video Manager Component ─── */
+function VideoManager() {
+  const [videoInput, setVideoInput] = useState("");
+  const [videos, setVideos] = useState<VideoEntry[]>([]);
+  const [status, setStatus] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [loadingVideos, setLoadingVideos] = useState(true);
+
+  useEffect(() => {
+    fetchVideos().then((v) => { setVideos(v); setLoadingVideos(false); });
+  }, []);
+
+  const handleSubmit = async () => {
+    const url = videoInput.trim();
+    if (!url) { setStatus({ type: "error", msg: "Digite uma URL de vídeo válida." }); return; }
+    setLoading(true);
+    setStatus(null);
+    const result = await addVideo(url);
+    setLoading(false);
+    if (result.ok) {
+      setStatus({ type: "success", msg: "✅ Vídeo salvo! Agora aparece para todos os visitantes." });
+      setVideoInput("");
+      fetchVideos().then(setVideos);
+    } else {
+      setStatus({ type: "error", msg: `Erro: ${result.error ?? "falha ao salvar"}` });
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    await deleteVideo(id);
+    setVideos((v) => v.filter((x) => x.id !== id));
+  };
+
+  const previewUrl = videoInput.trim();
+  const embedPreview = previewUrl ? buildEmbedUrl(previewUrl) : null;
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm space-y-4">
+      <h3 className="font-bold text-gray-700 text-xs uppercase tracking-wide flex items-center gap-2">
+        <Video className="w-4 h-4" /> Gerenciador de Vídeo
+      </h3>
+
+      <div className="rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-xs text-green-800">
+        <strong>Funciona no Vercel:</strong> Cole o link e clique em Salvar. O vídeo aparece para todos os visitantes imediatamente — sem localStorage, sem dependência do Replit ficar ligado.
+      </div>
+
+      {/* Input */}
+      <div className="space-y-2">
+        <label className="block text-xs font-semibold text-gray-600">URL do Vídeo</label>
+        <input
+          type="url"
+          value={videoInput}
+          onChange={(e) => { setVideoInput(e.target.value); setStatus(null); }}
+          onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+          placeholder="https://youtube.com/watch?v=... ou https://files.catbox.moe/video.mp4"
+          className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+        />
+        <p className="text-xs text-gray-400">Aceita: YouTube, Vimeo, link direto de MP4 (Catbox, etc.)</p>
+      </div>
+
+      {/* Preview while typing */}
+      {previewUrl && (
+        <div className="rounded-lg overflow-hidden border border-gray-100 aspect-video bg-black">
+          {embedPreview ? (
+            <iframe src={embedPreview} className="w-full h-full" allowFullScreen />
+          ) : (
+            <video src={previewUrl} controls className="w-full h-full object-contain" />
+          )}
+        </div>
+      )}
+
+      {/* Submit */}
+      <button
+        onClick={handleSubmit}
+        disabled={loading}
+        className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-60 text-white font-bold py-3 rounded-xl transition-colors text-sm"
+      >
+        {loading ? <span className="animate-spin">⏳</span> : <Save className="w-4 h-4" />}
+        {loading ? "Salvando..." : "Salvar Vídeo para Todos os Visitantes"}
+      </button>
+
+      {/* Status message */}
+      {status && (
+        <div className={`rounded-lg px-4 py-3 text-sm font-medium ${status.type === "success" ? "bg-green-50 text-green-800 border border-green-200" : "bg-red-50 text-red-800 border border-red-200"}`}>
+          {status.msg}
+        </div>
+      )}
+
+      {/* Current video list */}
+      <div className="space-y-2">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Vídeos salvos</p>
+        {loadingVideos ? (
+          <div className="text-xs text-gray-400 py-2">Carregando...</div>
+        ) : videos.length === 0 ? (
+          <div className="text-xs text-gray-400 py-2 text-center border border-dashed rounded-lg">Nenhum vídeo salvo ainda</div>
+        ) : (
+          <div className="space-y-2">
+            {videos.map((v, i) => (
+              <div key={v.id} className="flex items-center gap-3 bg-gray-50 rounded-lg px-3 py-2.5 border border-gray-100">
+                <span className={`text-xs px-1.5 py-0.5 rounded font-bold ${i === 0 ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-500"}`}>
+                  {i === 0 ? "ATIVO" : `#${i + 1}`}
+                </span>
+                <span className="flex-1 text-xs text-gray-600 truncate">{v.url}</span>
+                <button
+                  onClick={() => handleDelete(v.id)}
+                  className="text-red-400 hover:text-red-600 transition-colors flex-shrink-0"
+                  title="Remover"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Product ─── */
 function ProductTab({ settings, onChange, onSave, syncStatus }: { settings: AppSettings; onChange: (s: AppSettings) => void; onSave: () => void; syncStatus: SyncStatus }) {
   const set = (key: keyof AppSettings, value: string) => onChange({ ...settings, [key]: value });
-  const videoFileRef = useRef<HTMLInputElement>(null);
-  const [localVideoPreview, setLocalVideoPreview] = useState<string | null>(null);
 
   const CURRENCIES = ["R$", "$", "€", "£", "USDT", "¥", "CHF", "AUD"];
 
@@ -327,116 +445,8 @@ function ProductTab({ settings, onChange, onSave, syncStatus }: { settings: AppS
         </div>
       </div>
 
-      {/* Video */}
-      <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm space-y-4">
-        <h3 className="font-bold text-gray-700 text-xs uppercase tracking-wide flex items-center gap-2">
-          <Video className="w-4 h-4" /> Vídeo
-        </h3>
-
-        {/* Recommended: URL */}
-        <div className="rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-xs text-green-800 flex gap-2">
-          <span className="text-base leading-none">✅</span>
-          <span><strong>Recomendado para todos os visitantes:</strong> Cole um link do YouTube, Vimeo ou Streamable. Funciona em qualquer lugar, sem limitações de tamanho.</span>
-        </div>
-
-        <Field
-          label="Link do vídeo"
-          value={settings.videoUrl.startsWith("data:") ? "" : settings.videoUrl}
-          onChange={(v) => set("videoUrl", v)}
-          placeholder="https://youtube.com/watch?v=..."
-          hint="YouTube, Vimeo, Streamable, ou link direto de MP4 público."
-        />
-        {settings.videoUrl && !settings.videoUrl.startsWith("data:") && (
-          <div className="rounded-lg overflow-hidden border border-gray-100 aspect-video bg-black">
-            {settings.videoUrl.includes("youtu") || settings.videoUrl.includes("vimeo") ? (
-              <iframe
-                src={
-                  settings.videoUrl.includes("youtu")
-                    ? `https://www.youtube.com/embed/${settings.videoUrl.match(/(?:v=|youtu\.be\/)([^&?/]+)/)?.[1]}`
-                    : `https://player.vimeo.com/video/${settings.videoUrl.match(/vimeo\.com\/(\d+)/)?.[1]}`
-                }
-                className="w-full h-full"
-                allowFullScreen
-              />
-            ) : (
-              <video
-                src={settings.videoUrl}
-                controls
-                className="w-full h-full object-contain"
-              />
-            )}
-          </div>
-        )}
-
-        {/* Optional: local file (admin preview only) */}
-        <details className="group">
-          <summary className="cursor-pointer text-xs text-gray-400 hover:text-gray-600 select-none list-none flex items-center gap-1">
-            <span className="group-open:rotate-90 transition-transform inline-block">▶</span>
-            Ou enviar arquivo local (apenas pré-visualização)
-          </summary>
-          <div className="mt-3 space-y-3">
-            <div className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-xs text-amber-800 flex gap-2">
-              <span className="text-base leading-none">⚠️</span>
-              <span><strong>Atenção:</strong> Vídeos enviados como arquivo ficam visíveis apenas enquanto o Replit estiver aberto. Para que <em>todos</em> os visitantes vejam, use o link acima.</span>
-            </div>
-            <input
-              ref={videoFileRef}
-              type="file"
-              accept="video/*"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (!file) return;
-                const MAX_MB = 15;
-                if (file.size > MAX_MB * 1024 * 1024) {
-                  alert(`Vídeo muito grande. Limite: ${MAX_MB}MB.\n\nDica: use um link do YouTube ou Vimeo.`);
-                  if (videoFileRef.current) videoFileRef.current.value = "";
-                  return;
-                }
-                setLocalVideoPreview("loading");
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                  const dataUrl = ev.target?.result as string;
-                  setLocalVideoPreview(dataUrl);
-                  setSessionVideoObjectUrl(dataUrl);
-                  onChange({ ...settings, videoUrl: dataUrl });
-                };
-                reader.readAsDataURL(file);
-              }}
-            />
-            <button
-              onClick={() => videoFileRef.current?.click()}
-              className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 hover:border-purple-400 text-gray-500 hover:text-purple-600 font-semibold py-4 rounded-xl transition-colors text-sm"
-            >
-              <Upload className="w-4 h-4" />
-              Escolher vídeo (pré-visualização)
-            </button>
-
-            {(localVideoPreview && localVideoPreview !== "loading") || settings.videoUrl.startsWith("data:") ? (
-              <div className="space-y-2">
-                <div className="rounded-lg overflow-hidden border border-gray-100 aspect-video bg-black">
-                  <video src={localVideoPreview && localVideoPreview !== "loading" ? localVideoPreview : settings.videoUrl} controls className="w-full h-full object-contain" />
-                </div>
-                <button
-                  onClick={() => {
-                    setLocalVideoPreview(null);
-                    setSessionVideoObjectUrl(null);
-                    if (videoFileRef.current) videoFileRef.current.value = "";
-                    onChange({ ...settings, videoUrl: "" });
-                  }}
-                  className="w-full text-xs text-red-500 hover:text-red-700 py-1 transition-colors"
-                >
-                  Remover vídeo
-                </button>
-              </div>
-            ) : localVideoPreview === "loading" ? (
-              <div className="flex items-center justify-center gap-2 py-4 text-sm text-purple-500">
-                <span className="animate-spin">⏳</span> Carregando vídeo...
-              </div>
-            ) : null}
-          </div>
-        </details>
-      </div>
+      {/* Video Manager */}
+      <VideoManager />
 
       {/* Telegram */}
       <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm space-y-4">
