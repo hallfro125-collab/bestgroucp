@@ -51,7 +51,7 @@ async function saveCommentsToGitHub(comments: CommentEntry[], sha: string | null
 }
 
 // GET /api/comments
-router.get("/api/comments", async (_req, res) => {
+router.get("/comments", async (_req, res) => {
   try {
     const { content } = await getCommentsFromGitHub();
     res.json(content);
@@ -62,7 +62,7 @@ router.get("/api/comments", async (_req, res) => {
 });
 
 // POST /api/comments
-router.post("/api/comments", async (req, res) => {
+router.post("/comments", async (req, res) => {
   try {
     const { name, text, flag, initials, color, lang } = req.body || {};
     if (!name || !text) return res.status(400).json({ error: "name and text are required" });
