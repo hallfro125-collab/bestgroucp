@@ -1,5 +1,21 @@
 [
   {
+    "id": "6ufnxausarcmmuudl39",
+    "timestamp": 1773765829126,
+    "country": "Desconhecido",
+    "countryCode": "",
+    "city": "—",
+    "flag": "🌍",
+    "ip": "—",
+    "device": "Mobile",
+    "browser": "Chrome",
+    "os": "Android",
+    "language": "ko-KR",
+    "referrer": "android-app://com.google.android.googlequicksearchbox/",
+    "ctaClicked": false,
+    "paymentClicked": false
+  },
+  {
     "id": "ln6rv89etnmmuubm4y",
     "timestamp": 1773765737170,
     "country": "Desconhecido",
