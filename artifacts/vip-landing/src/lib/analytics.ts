@@ -15,7 +15,6 @@ export type Visitor = {
   paymentClicked: boolean;
 };
 
-const VISITORS_KEY = "vip_visitors";
 const SESSION_KEY = "vip_session_id";
 
 export function countryFlag(code: string): string {
@@ -54,36 +53,96 @@ export function getOS(): string {
   return "Outro";
 }
 
-export function loadVisitors(): Visitor[] {
-  try {
-    const raw = localStorage.getItem(VISITORS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-export function saveVisitor(v: Visitor): void {
-  const visitors = loadVisitors();
-  visitors.push(v);
-  localStorage.setItem(VISITORS_KEY, JSON.stringify(visitors));
-}
-
-export function updateVisitor(id: string, updates: Partial<Visitor>): void {
-  const visitors = loadVisitors();
-  const idx = visitors.findIndex((v) => v.id === id);
-  if (idx !== -1) {
-    visitors[idx] = { ...visitors[idx], ...updates };
-    localStorage.setItem(VISITORS_KEY, JSON.stringify(visitors));
-  }
-}
-
 export function getSessionId(): string | null {
   return sessionStorage.getItem(SESSION_KEY);
 }
 
 export function setSessionId(id: string): void {
   sessionStorage.setItem(SESSION_KEY, id);
+}
+
+/** Load all visitors from the server (admin only). */
+export async function fetchRemoteVisitors(): Promise<Visitor[]> {
+  try {
+    const res = await fetch("/api/visitors", {
+      headers: { "x-admin-token": "Almanegra" },
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Track a new visitor — saves to server, enriches with geo. */
+export async function trackVisitor(): Promise<string | null> {
+  const existingId = getSessionId();
+  if (existingId) return existingId;
+
+  const id = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  setSessionId(id);
+
+  const visitor = {
+    id,
+    timestamp: Date.now(),
+    country: "Desconhecido",
+    countryCode: "",
+    city: "—",
+    flag: "🌍",
+    ip: "—",
+    device: getDevice(),
+    browser: getBrowser(),
+    os: getOS(),
+    language: navigator.language || "—",
+    referrer: document.referrer || "Direto",
+    ctaClicked: false,
+    paymentClicked: false,
+  };
+
+  // Fire-and-forget: save to server
+  fetch("/api/visitors", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(visitor),
+  }).catch(() => {});
+
+  // Enrich with geo (async, update after)
+  fetch("https://ipapi.co/json/")
+    .then((r) => r.json())
+    .then((data) => {
+      if (!data || data.error) return;
+      const geo = {
+        country: data.country_name || "Desconhecido",
+        countryCode: data.country_code || "",
+        city: data.city || "—",
+        flag: data.country_code ? countryFlag(data.country_code) : "🌍",
+        ip: data.ip || "—",
+      };
+      fetch(`/api/visitors/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(geo),
+      }).catch(() => {});
+    })
+    .catch(() => {});
+
+  return id;
+}
+
+/** Update visitor fields on server (ctaClicked, paymentClicked, etc.) */
+export async function updateVisitor(id: string, updates: Partial<Visitor>): Promise<void> {
+  if (!id) return;
+  try {
+    await fetch(`/api/visitors/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updates),
+    });
+  } catch {
+    // silent fail — never block the user
+  }
 }
 
 export function timeAgo(timestamp: number): string {
@@ -107,49 +166,4 @@ export function formatDate(timestamp: number): string {
     month: "2-digit",
     year: "numeric",
   });
-}
-
-export async function trackVisitor(): Promise<string | null> {
-  const existingId = getSessionId();
-  if (existingId) return existingId;
-
-  const id = Math.random().toString(36).slice(2) + Date.now().toString(36);
-  setSessionId(id);
-
-  const visitor: Visitor = {
-    id,
-    timestamp: Date.now(),
-    country: "Desconhecido",
-    countryCode: "",
-    city: "—",
-    flag: "🌍",
-    ip: "—",
-    device: getDevice(),
-    browser: getBrowser(),
-    os: getOS(),
-    language: navigator.language || "—",
-    referrer: document.referrer || "Direto",
-    ctaClicked: false,
-    paymentClicked: false,
-  };
-
-  saveVisitor(visitor);
-
-  try {
-    const res = await fetch("https://ipapi.co/json/");
-    if (res.ok) {
-      const data = await res.json();
-      updateVisitor(id, {
-        country: data.country_name || "Desconhecido",
-        countryCode: data.country_code || "",
-        city: data.city || "—",
-        flag: data.country_code ? countryFlag(data.country_code) : "🌍",
-        ip: data.ip || "—",
-      });
-    }
-  } catch {
-    // geo lookup failed silently
-  }
-
-  return id;
 }
