@@ -54,7 +54,7 @@ async function saveVisitors(visitors: VisitorEntry[], sha: string | null, messag
 }
 
 // GET /api/visitors — admin only
-router.get("/api/visitors", async (req: Request, res: Response) => {
+router.get("/visitors", async (req: Request, res: Response) => {
   if (req.headers["x-admin-token"] !== ADMIN_TOKEN) {
     return res.status(401).json({ error: "Unauthorized" });
   }
@@ -68,7 +68,7 @@ router.get("/api/visitors", async (req: Request, res: Response) => {
 });
 
 // POST /api/visitors — public (landing page)
-router.post("/api/visitors", async (req: Request, res: Response) => {
+router.post("/visitors", async (req: Request, res: Response) => {
   try {
     const { id, timestamp, country, countryCode, city, flag, ip, device, browser, os, language, referrer } = req.body || {};
     if (!id) return res.status(400).json({ error: "id required" });
@@ -102,7 +102,7 @@ router.post("/api/visitors", async (req: Request, res: Response) => {
 });
 
 // PATCH /api/visitors/:id — public (update ctaClicked, paymentClicked, geo)
-router.patch("/api/visitors/:id", async (req: Request, res: Response) => {
+router.patch("/visitors/:id", async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
     const { content, sha } = await getVisitors();
