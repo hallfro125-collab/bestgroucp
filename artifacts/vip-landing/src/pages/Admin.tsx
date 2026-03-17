@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { loadSettings, saveSettings, type AppSettings, type Proof } from "@/lib/settings";
 import { saveRemoteSettings, fetchRemoteSettings } from "@/lib/settingsApi";
-import { loadVisitors, timeAgo, formatTime, formatDate, type Visitor } from "@/lib/analytics";
+import { fetchRemoteVisitors, timeAgo, formatTime, formatDate, type Visitor } from "@/lib/analytics";
 import { addVideo, fetchVideos, deleteVideo, buildEmbedUrl, type VideoEntry } from "@/lib/videosApi";
 
 type Tab = "dashboard" | "product" | "proofs" | "appearance" | "reports";
@@ -129,9 +129,9 @@ function Dashboard({ settings }: { settings: AppSettings }) {
   const [visitors, setVisitors] = useState<Visitor[]>([]);
 
   useEffect(() => {
-    const load = () => setVisitors(loadVisitors());
+    const load = () => fetchRemoteVisitors().then(setVisitors);
     load();
-    const id = setInterval(load, 3000);
+    const id = setInterval(load, 30000);
     return () => clearInterval(id);
   }, []);
 
@@ -728,15 +728,14 @@ function Reports() {
   const [filter, setFilter] = useState<"all" | "cta" | "payment">("all");
 
   useEffect(() => {
-    const load = () => setVisitors(loadVisitors());
+    const load = () => fetchRemoteVisitors().then(setVisitors);
     load();
-    const id = setInterval(load, 3000);
+    const id = setInterval(load, 30000);
     return () => clearInterval(id);
   }, []);
 
   const clearAll = () => {
     if (!confirm("Apagar todos os dados de visitantes?")) return;
-    localStorage.removeItem("vip_visitors");
     setVisitors([]);
   };
 
