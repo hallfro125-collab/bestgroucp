@@ -35,6 +35,8 @@ const LANGS = {
     commentsBtn: "Post Comment",
     commentsSent: "Your comment was posted!",
     commentsJustNow: "just now",
+    sendCodeBtn: "Send payment code",
+    msgCopied: "Message copied! Paste it in Telegram.",
   },
   pt: {
     flag: "🇧🇷", name: "PT",
@@ -62,6 +64,8 @@ const LANGS = {
     commentsBtn: "Publicar Comentário",
     commentsSent: "Seu comentário foi publicado!",
     commentsJustNow: "agora",
+    sendCodeBtn: "Enviar código de pagamento",
+    msgCopied: "Mensagem copiada! Cole no Telegram.",
   },
   es: {
     flag: "🇪🇸", name: "ES",
@@ -89,6 +93,8 @@ const LANGS = {
     commentsBtn: "Publicar Comentario",
     commentsSent: "¡Tu comentario fue publicado!",
     commentsJustNow: "ahora",
+    sendCodeBtn: "Enviar código de pago",
+    msgCopied: "¡Mensaje copiado! Pégalo en Telegram.",
   },
   fr: {
     flag: "🇫🇷", name: "FR",
@@ -116,6 +122,8 @@ const LANGS = {
     commentsBtn: "Publier un Commentaire",
     commentsSent: "Votre commentaire a été publié !",
     commentsJustNow: "à l'instant",
+    sendCodeBtn: "Envoyer le code de paiement",
+    msgCopied: "Message copié ! Collez-le dans Telegram.",
   },
   de: {
     flag: "🇩🇪", name: "DE",
@@ -143,6 +151,8 @@ const LANGS = {
     commentsBtn: "Kommentar posten",
     commentsSent: "Dein Kommentar wurde veröffentlicht!",
     commentsJustNow: "gerade eben",
+    sendCodeBtn: "Zahlungscode senden",
+    msgCopied: "Nachricht kopiert! In Telegram einfügen.",
   },
   it: {
     flag: "🇮🇹", name: "IT",
@@ -170,6 +180,8 @@ const LANGS = {
     commentsBtn: "Pubblica Commento",
     commentsSent: "Il tuo commento è stato pubblicato!",
     commentsJustNow: "adesso",
+    sendCodeBtn: "Invia codice di pagamento",
+    msgCopied: "Messaggio copiato! Incollalo su Telegram.",
   },
   zh: {
     flag: "🇨🇳", name: "中文",
@@ -197,6 +209,8 @@ const LANGS = {
     commentsBtn: "发表评论",
     commentsSent: "您的评论已发布！",
     commentsJustNow: "刚刚",
+    sendCodeBtn: "发送付款代码",
+    msgCopied: "消息已复制！请粘贴到 Telegram。",
   },
   ar: {
     flag: "🇸🇦", name: "AR",
@@ -224,6 +238,8 @@ const LANGS = {
     commentsBtn: "نشر التعليق",
     commentsSent: "تم نشر تعليقك!",
     commentsJustNow: "الآن",
+    sendCodeBtn: "إرسال رمز الدفع",
+    msgCopied: "تم نسخ الرسالة! الصقها في Telegram.",
   },
 } as const;
 
@@ -645,6 +661,7 @@ export default function Landing() {
   const [showModal, setShowModal] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string>("");
   const [lang, setLangState] = useState<LangKey>(getLang());
+  const [tgCopied, setTgCopied] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Callback ref: fires the instant the <video> element enters the DOM.
@@ -653,6 +670,11 @@ export default function Landing() {
     videoRef.current = el;
     if (!el) return;
     el.muted = true;
+    // webkit-playsinline needed for older iOS Safari (< 10)
+    el.setAttribute("webkit-playsinline", "");
+    el.setAttribute("playsinline", "");
+    // load() forces iOS to re-evaluate the muted state before play()
+    el.load();
     el.play().catch(() => {});
   }, []);
 
@@ -725,9 +747,18 @@ export default function Landing() {
   }, [setLocation]);
 
   const handleTelegramClick = () => {
-    const msg = encodeURIComponent(settings.telegramAutoMessage);
-    const link = settings.telegramLink.startsWith("http") ? settings.telegramLink : `https://t.me/${settings.telegramLink}`;
-    window.open(`${link}?start=${msg}`, "_blank");
+    // ?start= only works for Telegram bots — for groups/channels just open the link.
+    // If there's an auto-message, copy it to clipboard so the user can paste it.
+    const rawLink = settings.telegramLink || "";
+    const link = rawLink.startsWith("http") ? rawLink : `https://t.me/${rawLink.replace(/^@/, "")}`;
+    if (settings.telegramAutoMessage) {
+      try {
+        navigator.clipboard.writeText(settings.telegramAutoMessage);
+        setTgCopied(true);
+        setTimeout(() => setTgCopied(false), 3000);
+      } catch { /* clipboard not available */ }
+    }
+    window.open(link, "_blank");
   };
 
   // Video: fetched from /api/videos, falls back to settings.videoUrl if no videos added yet
@@ -861,6 +892,22 @@ export default function Landing() {
           <Lock className="w-4 h-4" />
           {pageCtaText}
         </button>
+
+        {settings.telegramLink && (
+          <button
+            onClick={handleTelegramClick}
+            className="w-full max-w-sm flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1dbd57] text-white font-bold text-base py-4 px-6 rounded-full shadow-lg transition-all duration-150 select-none mb-3"
+          >
+            <Send className="w-4 h-4" />
+            {t.sendCodeBtn}
+          </button>
+        )}
+
+        {tgCopied && (
+          <div className="w-full max-w-sm text-center text-xs text-green-700 bg-green-50 border border-green-200 rounded-xl px-3 py-2 mb-3 animate-pulse">
+            ✓ {t.msgCopied}
+          </div>
+        )}
 
         {settings.telegramLink && (
           <button
