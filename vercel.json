@@ -1,5 +1,5 @@
 {
-  "installCommand": "npm install -g pnpm && pnpm install",
+  "installCommand": "npm install -g pnpm@10 && pnpm install",
   "buildCommand": "pnpm --filter @workspace/vip-landing run build",
   "outputDirectory": "artifacts/vip-landing/dist/public",
   "framework": null,
