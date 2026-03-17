@@ -102,3 +102,11 @@
 .countdown-tick {
   animation: countdown-tick 0.3s ease-out;
 }
+
+/* ── Hide fullscreen & picture-in-picture from video controls ── */
+video::-webkit-media-controls-fullscreen-button,
+video::-webkit-media-controls-picture-in-picture-button,
+video::-webkit-media-controls-overflow-button {
+  display: none !important;
+}
+video::cue { /* keep subtitles if any */ }
