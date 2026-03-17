@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useLocation } from "wouter";
 import { Lock, PlayCircle, Send, X, ChevronDown, Heart, MessageCircle } from "lucide-react";
-import { loadSettings, sessionVideoObjectUrl, type AppSettings } from "@/lib/settings";
+import { loadSettings, type AppSettings } from "@/lib/settings";
 import { fetchRemoteSettings, saveLocalSettings } from "@/lib/settingsApi";
+import { fetchLatestVideoUrl, buildEmbedUrl } from "@/lib/videosApi";
 import { trackVisitor, updateVisitor, getSessionId } from "@/lib/analytics";
 
 /* ─── Translations ─── */
@@ -642,7 +643,7 @@ export default function Landing() {
   const [settings, setSettings] = useState<AppSettings>(loadSettings());
   const [isPlaying, setIsPlaying] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [localVideo, setLocalVideo] = useState<string | null>(sessionVideoObjectUrl);
+  const [videoUrl, setVideoUrl] = useState<string>("");
   const [lang, setLangState] = useState<LangKey>(getLang());
 
   const changeLang = (l: LangKey) => {
@@ -651,25 +652,30 @@ export default function Landing() {
   };
 
   useEffect(() => {
+    // Fetch page settings (headline, colors, CTA, etc.)
     fetchRemoteSettings().then((remote) => {
-      if (remote) {
-        saveLocalSettings(remote);
-        setSettings(remote);
-      }
+      if (remote) { saveLocalSettings(remote); setSettings(remote); }
+    });
+
+    // Fetch latest video from the videos API
+    fetchLatestVideoUrl().then((url) => {
+      if (url) setVideoUrl(url);
     });
 
     const onStorage = () => setSettings(loadSettings());
     window.addEventListener("storage", onStorage);
-    const id = setInterval(() => { setSettings(loadSettings()); setLocalVideo(sessionVideoObjectUrl); }, 1500);
+
+    // Re-check settings every 30s
     const remoteId = setInterval(() => {
       fetchRemoteSettings().then((remote) => {
         if (remote) { saveLocalSettings(remote); setSettings(remote); }
       });
+      fetchLatestVideoUrl().then((url) => { if (url) setVideoUrl(url); });
     }, 30000);
+
     trackVisitor();
     return () => {
       window.removeEventListener("storage", onStorage);
-      clearInterval(id);
       clearInterval(remoteId);
     };
   }, []);
@@ -705,16 +711,11 @@ export default function Landing() {
     window.open(`${link}?start=${msg}`, "_blank");
   };
 
-  const isDataVideo = !localVideo && settings.videoUrl.startsWith("data:");
-  const embedUrl = (!localVideo && !isDataVideo) ? getVideoEmbed(settings.videoUrl) : null;
-  // Direct video URL: Catbox, any .mp4/.webm/.mov/.ogg link, or non-embed external URL
-  const isDirectVideo =
-    !localVideo &&
-    !isDataVideo &&
-    !embedUrl &&
-    !!settings.videoUrl &&
-    !settings.videoUrl.startsWith("data:");
-  const activeVideoSrc = localVideo || (isDataVideo ? settings.videoUrl : null) || (isDirectVideo ? settings.videoUrl : null);
+  // Video: fetched from /api/videos, falls back to settings.videoUrl if no videos added yet
+  const activeUrl = videoUrl || settings.videoUrl || "";
+  const embedUrl = activeUrl ? buildEmbedUrl(activeUrl) : null;
+  const isDirectVideo = !!activeUrl && !embedUrl;
+  const activeVideoSrc = isDirectVideo ? activeUrl : null;
   const primaryColor = settings.primaryColor || "#dc2626";
   const accentColor = settings.accentColor || "#9333ea";
 
