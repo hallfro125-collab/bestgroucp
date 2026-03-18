@@ -453,11 +453,17 @@ function ProductTab({ settings, onChange, onSave, syncStatus }: { settings: AppS
         <h3 className="font-bold text-gray-700 text-xs uppercase tracking-wide flex items-center gap-2">
           <Send className="w-4 h-4 text-[#229ED9]" /> Botão do Telegram
         </h3>
+        <Toggle
+          label="Ativar redirecionamento automático para Telegram"
+          value={!!settings.telegramAutoRedirect}
+          onChange={(v) => set("telegramAutoRedirect", v)}
+        />
         <Field
-          label="Link do Grupo Telegram"
-          value={settings.telegramLink}
-          onChange={(v) => set("telegramLink", v)}
-          placeholder="https://t.me/seugrupo"
+          label="Username ou número do Telegram"
+          value={settings.telegramUsername || ""}
+          onChange={(v) => set("telegramUsername", v)}
+          placeholder="seugrupo ou +5511999999999"
+          hint="Sem @. Exemplo: seugrupo ou +5511999999999"
         />
         <Field
           label="Texto do Botão Telegram"
@@ -466,20 +472,33 @@ function ProductTab({ settings, onChange, onSave, syncStatus }: { settings: AppS
           placeholder="Entrar no Grupo VIP"
         />
         <Field
-          label="Mensagem Automática (enviada ao clicar)"
+          label="Mensagem pré-preenchida no Telegram"
           value={settings.telegramAutoMessage}
           onChange={(v) => set("telegramAutoMessage", v)}
           type="textarea"
           placeholder="Olá! Acabei de comprar o acesso VIP..."
-          hint="Esta mensagem será pré-preenchida no Telegram quando o lead clicar no botão."
+          hint="Ao clicar no botão, o Telegram abre com esta mensagem já pronta para enviar."
         />
         {/* Preview */}
-        <div className="bg-gray-50 rounded-lg p-3 border border-dashed border-gray-200">
-          <p className="text-xs text-gray-400 mb-1 font-medium">Preview do botão:</p>
+        <div className="bg-gray-50 rounded-lg p-3 border border-dashed border-gray-200 space-y-2">
+          <p className="text-xs text-gray-400 font-medium">Preview do botão:</p>
           <div className="flex items-center gap-2 bg-[#229ED9] text-white px-4 py-2.5 rounded-full w-fit text-sm font-semibold">
             <Send className="w-3.5 h-3.5" />
             {settings.telegramButtonText || "Entrar no Grupo VIP"}
           </div>
+          {settings.telegramAutoRedirect && settings.telegramUsername && (
+            <p className="text-xs text-green-600 font-medium">
+              ✓ Vai abrir: t.me/{(settings.telegramUsername || "").replace(/^@/, "")}?text=...
+            </p>
+          )}
+          {settings.telegramAutoRedirect && !settings.telegramUsername && (
+            <p className="text-xs text-orange-500 font-medium">
+              ⚠ Defina o username para ativar o redirecionamento.
+            </p>
+          )}
+          {!settings.telegramAutoRedirect && (
+            <p className="text-xs text-gray-400">Redirecionamento desativado — botão não faz nada ao clicar.</p>
+          )}
         </div>
       </div>
 
@@ -897,7 +916,7 @@ function Reports() {
 }
 
 /* ─── Main Admin ─── */
-const ADMIN_PASSWORD = "Almanegra";
+const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD ?? "";
 const ADMIN_KEY = "vip_admin_auth";
 
 function AdminLogin({ onAuth }: { onAuth: () => void }) {
