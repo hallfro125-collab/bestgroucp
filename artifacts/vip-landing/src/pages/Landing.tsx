@@ -633,6 +633,75 @@ function getVideoEmbed(url: string): string | null {
   return null;
 }
 
+/* ─── Auto Message Overlay ─── */
+
+function AutoMessageOverlay({ message, onClose, telegramLink }: {
+  message: string; onClose: () => void; telegramLink: string;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const copyMsg = async () => {
+    try {
+      await navigator.clipboard.writeText(message);
+    } catch {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = message;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      } catch { /* ignore */ }
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 3000);
+  };
+
+  const openTelegram = () => {
+    const link = telegramLink.startsWith("http") ? telegramLink : `https://t.me/${telegramLink.replace(/^@/, "")}`;
+    window.open(link, "_blank");
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pb-6 sm:pb-0">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
+        <div className="flex items-center justify-between px-4 pt-4 pb-2 border-b border-gray-100">
+          <span className="text-sm font-bold text-gray-700">📋 Copie esta mensagem</span>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="px-5 py-4">
+          <p className="text-xs text-gray-500 mb-2">Envie esta mensagem no Telegram após o pagamento:</p>
+          <div
+            onClick={copyMsg}
+            className="w-full bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-800 leading-relaxed mb-4 cursor-pointer hover:border-gray-400 transition-colors select-all"
+          >
+            {message}
+          </div>
+          <button
+            onClick={copyMsg}
+            className={`w-full py-3 rounded-xl font-bold text-sm mb-3 transition-all ${copied ? "bg-green-500 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
+          >
+            {copied ? "✓ Copiado!" : "📋 Copiar mensagem"}
+          </button>
+          <button
+            onClick={openTelegram}
+            className="w-full flex items-center justify-center gap-2 bg-[#229ED9] hover:bg-[#1a8ec0] text-white font-bold py-3.5 rounded-xl transition-all shadow"
+          >
+            <Send className="w-4 h-4" />
+            Abrir Telegram e enviar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Payment Modal ─── */
 
 function PaymentModal({ onClose, paymentUrl, paymentButtonText, primaryColor, t, lang, onLangChange,
@@ -711,10 +780,9 @@ export default function Landing() {
   const [, setLocation] = useLocation();
   const [settings, setSettings] = useState<AppSettings>(loadSettings());
   const [isPlaying, setIsPlaying] = useState(true);
-  const [showModal, setShowModal] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string>("");
   const [lang, setLangState] = useState<LangKey>(getLang());
-  const [tgCopied, setTgCopied] = useState(false);
+  const [showAutoMsg, setShowAutoMsg] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Callback ref: fires the instant the <video> element enters the DOM.
@@ -793,25 +861,21 @@ export default function Landing() {
     ctaCountRef.current += 1;
     if (ctaTimerRef.current) clearTimeout(ctaTimerRef.current);
     if (ctaCountRef.current >= 3) { ctaCountRef.current = 0; setLocation("/admin"); return; }
-    setShowModal(true);
     const sid = getSessionId();
-    if (sid) updateVisitor(sid, { ctaClicked: true });
+    if (sid) updateVisitor(sid, { ctaClicked: true, paymentClicked: true });
     ctaTimerRef.current = setTimeout(() => { ctaCountRef.current = 0; }, 1500);
-  }, [setLocation]);
+    const url = settings.paymentUrl;
+    if (url) window.open(url, "_blank");
+  }, [setLocation, settings.paymentUrl]);
 
   const handleTelegramClick = () => {
-    // ?start= only works for Telegram bots — for groups/channels just open the link.
-    // If there's an auto-message, copy it to clipboard so the user can paste it.
-    const rawLink = settings.telegramLink || "";
-    const link = rawLink.startsWith("http") ? rawLink : `https://t.me/${rawLink.replace(/^@/, "")}`;
     if (settings.telegramAutoMessage) {
-      try {
-        navigator.clipboard.writeText(settings.telegramAutoMessage);
-        setTgCopied(true);
-        setTimeout(() => setTgCopied(false), 3000);
-      } catch { /* clipboard not available */ }
+      setShowAutoMsg(true);
+    } else {
+      const rawLink = settings.telegramLink || "";
+      const link = rawLink.startsWith("http") ? rawLink : `https://t.me/${rawLink.replace(/^@/, "")}`;
+      window.open(link, "_blank");
     }
-    window.open(link, "_blank");
   };
 
   // Video: fetched from /api/videos, falls back to settings.videoUrl if no videos added yet
@@ -832,24 +896,12 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: settings.bgColor || "#ffffff" }}>
-      {showModal && (
-        <PaymentModal
-          onClose={() => setShowModal(false)}
-          paymentUrl={settings.paymentUrl}
-          paymentButtonText={settings.paymentButtonText}
-          primaryColor={primaryColor}
-          t={t} lang={lang} onLangChange={changeLang}
-          modalTitle={settings.modalTitle}
-          modalBody={settings.modalBody}
-          modalStep1={settings.modalStep1}
-          modalStep2={settings.modalStep2}
-          modalStep3={settings.modalStep3}
-          onPaymentClick={() => {
-            const sid = getSessionId();
-            if (sid) updateVisitor(sid, { paymentClicked: true });
-          }}
+
+      {showAutoMsg && settings.telegramAutoMessage && (
+        <AutoMessageOverlay
+          message={settings.telegramAutoMessage}
           telegramLink={settings.telegramLink}
-          onTelegramClick={handleTelegramClick}
+          onClose={() => setShowAutoMsg(false)}
         />
       )}
 
@@ -947,22 +999,6 @@ export default function Landing() {
           <Lock className="w-4 h-4" />
           {pageCtaText}
         </button>
-
-        {settings.telegramLink && (
-          <button
-            onClick={handleTelegramClick}
-            className="w-full max-w-sm flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1dbd57] text-white font-bold text-base py-4 px-6 rounded-full shadow-lg transition-all duration-150 select-none mb-3"
-          >
-            <Send className="w-4 h-4" />
-            {t.sendCodeBtn}
-          </button>
-        )}
-
-        {tgCopied && (
-          <div className="w-full max-w-sm text-center text-xs text-green-700 bg-green-50 border border-green-200 rounded-xl px-3 py-2 mb-3 animate-pulse">
-            ✓ {t.msgCopied}
-          </div>
-        )}
 
         {settings.telegramLink && (
           <button
