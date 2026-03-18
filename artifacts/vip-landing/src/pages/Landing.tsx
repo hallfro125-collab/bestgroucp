@@ -633,74 +633,6 @@ function getVideoEmbed(url: string): string | null {
   return null;
 }
 
-/* ─── Auto Message Overlay ─── */
-
-function AutoMessageOverlay({ message, onClose, telegramLink }: {
-  message: string; onClose: () => void; telegramLink: string;
-}) {
-  const [copied, setCopied] = useState(false);
-
-  const copyMsg = async () => {
-    try {
-      await navigator.clipboard.writeText(message);
-    } catch {
-      try {
-        const ta = document.createElement("textarea");
-        ta.value = message;
-        ta.style.position = "fixed";
-        ta.style.opacity = "0";
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand("copy");
-        document.body.removeChild(ta);
-      } catch { /* ignore */ }
-    }
-    setCopied(true);
-    setTimeout(() => setCopied(false), 3000);
-  };
-
-  const openTelegram = () => {
-    const link = telegramLink.startsWith("http") ? telegramLink : `https://t.me/${telegramLink.replace(/^@/, "")}`;
-    window.open(link, "_blank");
-    onClose();
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pb-6 sm:pb-0">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
-        <div className="flex items-center justify-between px-4 pt-4 pb-2 border-b border-gray-100">
-          <span className="text-sm font-bold text-gray-700">📋 Copie esta mensagem</span>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 transition-colors">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="px-5 py-4">
-          <p className="text-xs text-gray-500 mb-2">Envie esta mensagem no Telegram após o pagamento:</p>
-          <div
-            onClick={copyMsg}
-            className="w-full bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-800 leading-relaxed mb-4 cursor-pointer hover:border-gray-400 transition-colors select-all"
-          >
-            {message}
-          </div>
-          <button
-            onClick={copyMsg}
-            className={`w-full py-3 rounded-xl font-bold text-sm mb-3 transition-all ${copied ? "bg-green-500 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
-          >
-            {copied ? "✓ Copiado!" : "📋 Copiar mensagem"}
-          </button>
-          <button
-            onClick={openTelegram}
-            className="w-full flex items-center justify-center gap-2 bg-[#229ED9] hover:bg-[#1a8ec0] text-white font-bold py-3.5 rounded-xl transition-all shadow"
-          >
-            <Send className="w-4 h-4" />
-            Abrir Telegram e enviar
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /* ─── Payment Modal ─── */
 
@@ -782,7 +714,6 @@ export default function Landing() {
   const [isPlaying, setIsPlaying] = useState(true);
   const [videoUrl, setVideoUrl] = useState<string>("");
   const [lang, setLangState] = useState<LangKey>(getLang());
-  const [showAutoMsg, setShowAutoMsg] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Callback ref: fires the instant the <video> element enters the DOM.
@@ -869,12 +800,12 @@ export default function Landing() {
   }, [setLocation, settings.paymentUrl]);
 
   const handleTelegramClick = () => {
-    if (settings.telegramAutoMessage) {
-      setShowAutoMsg(true);
-    } else {
-      const rawLink = settings.telegramLink || "";
-      const link = rawLink.startsWith("http") ? rawLink : `https://t.me/${rawLink.replace(/^@/, "")}`;
-      window.open(link, "_blank");
+    if (settings.telegramAutoRedirect) {
+      const username = (settings.telegramUsername || "").replace(/^@/, "").trim();
+      const message = encodeURIComponent(settings.telegramAutoMessage || "");
+      if (username) {
+        window.location.href = `https://t.me/${username}?text=${message}`;
+      }
     }
   };
 
@@ -896,14 +827,6 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: settings.bgColor || "#ffffff" }}>
-
-      {showAutoMsg && settings.telegramAutoMessage && (
-        <AutoMessageOverlay
-          message={settings.telegramAutoMessage}
-          telegramLink={settings.telegramLink}
-          onClose={() => setShowAutoMsg(false)}
-        />
-      )}
 
       {/* Top Banner */}
       <div className="bg-white border-b border-gray-100 px-4 py-2 flex items-center justify-between">
