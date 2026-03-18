@@ -4,7 +4,7 @@ import { ReplitConnectors } from "@replit/connectors-sdk";
 const router: IRouter = Router();
 const KV_KEY = "vip_settings";
 const ADMIN_TOKEN = "Almanegra";
-const GITHUB_REPO = "hallfro125-collab/bestgroucp";
+const GITHUB_REPO = "hallfro125-collab/bestgroupcp";
 const GITHUB_FILE = "settings.json";
 const GITHUB_BRANCH = "main";
 
