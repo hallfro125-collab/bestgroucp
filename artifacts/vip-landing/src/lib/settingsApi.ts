@@ -3,7 +3,7 @@ import { AppSettings, DEFAULT_SETTINGS, SETTINGS_KEY } from "./settings";
 const ADMIN_TOKEN = "Almanegra";
 const REPLIT_API = "https://e6651bee-47d4-47f2-b154-0682122dae11-00-2wdy8w90axqbo.kirk.replit.dev/api";
 // Use GitHub Contents API (no CDN cache) instead of raw.githubusercontent.com (cached for minutes)
-const GITHUB_API_URL = "https://api.github.com/repos/hallfro125-collab/bestgroucp/contents/settings.json";
+const GITHUB_API_URL = "https://api.github.com/repos/hallfro125-collab/bestgroupcp/contents/settings.json";
 
 function isReplitEnv(): boolean {
   if (import.meta.env.VITE_API_URL) return false;
