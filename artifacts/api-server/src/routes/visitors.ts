@@ -3,7 +3,7 @@ import { ReplitConnectors } from "@replit/connectors-sdk";
 
 const router: IRouter = Router();
 const ADMIN_TOKEN = "Almanegra";
-const GITHUB_REPO = "hallfro125-collab/bestgroucp";
+const GITHUB_REPO = "hallfro125-collab/bestgroupcp";
 const GITHUB_FILE = "visitors.json";
 const GITHUB_BRANCH = "main";
 const MAX_VISITORS = 500;
@@ -53,6 +53,25 @@ async function saveVisitors(visitors: VisitorEntry[], sha: string | null, messag
   if (!res.ok) throw new Error(`GitHub PUT failed: ${res.status} ${await res.text()}`);
 }
 
+async function withConflictRetry<T>(
+  fn: () => Promise<T>,
+  maxRetries = 3,
+): Promise<T> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg.includes("409") && attempt < maxRetries) {
+        await new Promise(r => setTimeout(r, 150 * (attempt + 1)));
+        continue;
+      }
+      throw e;
+    }
+  }
+  throw new Error("Max retries exceeded");
+}
+
 // GET /api/visitors — admin only
 router.get("/visitors", async (req: Request, res: Response) => {
   if (req.headers["x-admin-token"] !== ADMIN_TOKEN) {
@@ -90,10 +109,12 @@ router.post("/visitors", async (req: Request, res: Response) => {
       paymentClicked: false,
     };
 
-    const { content, sha } = await getVisitors();
-    if (content.some(v => v.id === visitor.id)) return res.status(200).json(visitor);
-    const updated = [visitor, ...content].slice(0, MAX_VISITORS);
-    await saveVisitors(updated, sha, `chore: new visitor ${visitor.id.slice(0, 8)}`);
+    await withConflictRetry(async () => {
+      const { content, sha } = await getVisitors();
+      if (content.some(v => v.id === visitor.id)) return;
+      const updated = [visitor, ...content].slice(0, MAX_VISITORS);
+      await saveVisitors(updated, sha, `chore: new visitor ${visitor.id.slice(0, 8)}`);
+    });
     return res.status(201).json(visitor);
   } catch (e) {
     console.error("POST visitor error:", e);
@@ -104,20 +125,26 @@ router.post("/visitors", async (req: Request, res: Response) => {
 // PATCH /api/visitors/:id — public (update ctaClicked, paymentClicked, geo)
 router.patch("/visitors/:id", async (req: Request, res: Response) => {
   const { id } = req.params;
+  let updated: VisitorEntry | undefined;
   try {
-    const { content, sha } = await getVisitors();
-    const idx = content.findIndex(v => v.id === id);
-    if (idx === -1) return res.status(404).json({ error: "Not found" });
-
     const allowed: (keyof VisitorEntry)[] = ["ctaClicked", "paymentClicked", "country", "countryCode", "city", "flag", "ip"];
-    for (const key of allowed) {
-      if ((req.body as Record<string, unknown>)[key] !== undefined) {
-        (content[idx] as Record<string, unknown>)[key] = (req.body as Record<string, unknown>)[key];
-      }
-    }
+    const patch = req.body as Record<string, unknown>;
 
-    await saveVisitors(content, sha, `chore: update visitor ${id.slice(0, 8)}`);
-    return res.json(content[idx]);
+    await withConflictRetry(async () => {
+      const { content, sha } = await getVisitors();
+      const idx = content.findIndex(v => v.id === id);
+      if (idx === -1) return;
+      for (const key of allowed) {
+        if (patch[key] !== undefined) {
+          (content[idx] as Record<string, unknown>)[key] = patch[key];
+        }
+      }
+      updated = content[idx];
+      await saveVisitors(content, sha, `chore: update visitor ${id.slice(0, 8)}`);
+    });
+
+    if (!updated) return res.status(404).json({ error: "Not found" });
+    return res.json(updated);
   } catch (e) {
     console.error("PATCH visitor error:", e);
     return res.status(500).json({ error: String(e) });
