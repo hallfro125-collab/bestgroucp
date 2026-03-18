@@ -26,6 +26,8 @@ export type AppSettings = {
   telegramLink: string;
   telegramButtonText: string;
   telegramAutoMessage: string;
+  telegramUsername: string;
+  telegramAutoRedirect: boolean;
   proofs: Proof[];
   primaryColor: string;
   accentColor: string;
@@ -54,6 +56,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   telegramLink: "https://t.me/seugrupo",
   telegramButtonText: "Entrar no Grupo VIP (Telegram)",
   telegramAutoMessage: "Olá! Acabei de comprar o acesso VIP e quero entrar no grupo.",
+  telegramUsername: "seugrupo",
+  telegramAutoRedirect: true,
   proofs: [],
   primaryColor: "#dc2626",
   accentColor: "#9333ea",
