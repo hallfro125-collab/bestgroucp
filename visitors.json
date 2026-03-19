@@ -1,5 +1,21 @@
 [
   {
+    "id": "tc60jwi8p7ammwujlse",
+    "timestamp": 1773887042319,
+    "country": "Desconhecido",
+    "countryCode": "",
+    "city": "—",
+    "flag": "🌍",
+    "ip": "—",
+    "device": "Mobile",
+    "browser": "Chrome",
+    "os": "Android",
+    "language": "ja-JP",
+    "referrer": "https://t.co/BNdwKTJM3J",
+    "ctaClicked": false,
+    "paymentClicked": false
+  },
+  {
     "id": "n26ev4j01qmmwuhcd5",
     "timestamp": 1773886936794,
     "country": "Hong Kong",
