@@ -1,5 +1,21 @@
 [
   {
+    "id": "1d1jcmeupagmmwvpnb3",
+    "timestamp": 1773889003839,
+    "country": "Desconhecido",
+    "countryCode": "",
+    "city": "—",
+    "flag": "🌍",
+    "ip": "—",
+    "device": "Desktop",
+    "browser": "Safari",
+    "os": "macOS",
+    "language": "en-US",
+    "referrer": "Direto",
+    "ctaClicked": false,
+    "paymentClicked": false
+  },
+  {
     "id": "6vd3te50eakmmwvoarl",
     "timestamp": 1773888940929,
     "country": "Desconhecido",
