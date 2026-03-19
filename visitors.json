@@ -1,5 +1,21 @@
 [
   {
+    "id": "p06uikc3yzommwu0uiw",
+    "timestamp": 1773886167176,
+    "country": "Desconhecido",
+    "countryCode": "",
+    "city": "—",
+    "flag": "🌍",
+    "ip": "—",
+    "device": "Mobile",
+    "browser": "Outro",
+    "os": "iOS",
+    "language": "ko-KR",
+    "referrer": "https://t.co/",
+    "ctaClicked": false,
+    "paymentClicked": false
+  },
+  {
     "id": "wzsg2om8zoammwtnqoo",
     "timestamp": 1773885555672,
     "country": "Mozambique",
