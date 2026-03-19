@@ -1,5 +1,21 @@
 [
   {
+    "id": "e38w0gdjf3mmwverwm",
+    "timestamp": 1773888496582,
+    "country": "Desconhecido",
+    "countryCode": "",
+    "city": "—",
+    "flag": "🌍",
+    "ip": "—",
+    "device": "Mobile",
+    "browser": "Safari",
+    "os": "iOS",
+    "language": "en-GB",
+    "referrer": "https://t.co/",
+    "ctaClicked": false,
+    "paymentClicked": false
+  },
+  {
     "id": "5aff1y93g0cmmwvdnsl",
     "timestamp": 1773888444598,
     "country": "Guatemala",
