@@ -1,5 +1,21 @@
 [
   {
+    "id": "35k0n0r6lhqmmwt82k1",
+    "timestamp": 1773884824561,
+    "country": "Desconhecido",
+    "countryCode": "",
+    "city": "—",
+    "flag": "🌍",
+    "ip": "—",
+    "device": "Desktop",
+    "browser": "Chrome",
+    "os": "Windows",
+    "language": "pt-PT",
+    "referrer": "https://vercel.com/",
+    "ctaClicked": false,
+    "paymentClicked": false
+  },
+  {
     "id": "bq6lynq0wjpmmwt6s25",
     "timestamp": 1773884764301,
     "country": "Desconhecido",
